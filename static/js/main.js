@@ -63,60 +63,90 @@ function showAlert(formId,msg,type='error'){
 }
 
 function doLogin(){
- const email=document.getElementById('l-email').value.trim();
- const pw=document.getElementById('l-password').value;
- let ok=true;
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){document.getElementById('l-err-email').classList.add('show');ok=false;}
- else document.getElementById('l-err-email').classList.remove('show');
- if(!pw){document.getElementById('l-err-password').classList.add('show');ok=false;}
- else document.getElementById('l-err-password').classList.remove('show');
- if(!ok) return;
- const user=getUsers().find(u=>u.email===email&&u.password===pw);
- if(!user){showAlert('login','Invalid email or password.');return;}
- saveSession(user);launchApp(user);
+  const email = document.getElementById('l-email').value.trim();
+  const pw    = document.getElementById('l-password').value;
+  let ok = true;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){document.getElementById('l-err-email').classList.add('show');ok=false;}
+  else document.getElementById('l-err-email').classList.remove('show');
+  if(!pw){document.getElementById('l-err-password').classList.add('show');ok=false;}
+  else document.getElementById('l-err-password').classList.remove('show');
+  if(!ok) return;
+
+  fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email, password: pw})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.error){ showAlert('login', data.error); return; }
+    currentUser = data.user;
+    launchApp(data.user);
+  })
+  .catch(() => showAlert('login', 'Server error. Try again.'));
 }
 
 function doRegister(){
- const fname=document.getElementById('r-fname').value.trim();
- const lname=document.getElementById('r-lname').value.trim();
- const email=document.getElementById('r-email').value.trim();
- const pw=document.getElementById('r-password').value;
- const conf=document.getElementById('r-confirm').value;
- let ok=true;
- const se=(id,v)=>document.getElementById('r-err-'+id).classList.toggle('show',v);
- if(!fname){se('fname',true);ok=false;}else se('fname',false);
- if(!lname){se('lname',true);ok=false;}else se('lname',false);
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){se('email',true);ok=false;}else se('email',false);
- if(pw.length<6){se('password',true);ok=false;}else se('password',false);
- if(pw!==conf){se('confirm',true);ok=false;}else se('confirm',false);
- if(!ok) return;
- const users=getUsers();
- if(users.find(u=>u.email===email)){showAlert('reg','An account with this email already exists.');return;}
- const user={id:'u_'+Date.now(),email,password:pw,fname,lname,phone:document.getElementById('r-phone').value,role:'user',createdAt:new Date().toISOString()};
- users.push(user);saveUsers(users);saveSession(user);
- showAlert('reg','Account created successfully!','success');
- setTimeout(()=>launchApp(user),800);
+  const fname = document.getElementById('r-fname').value.trim();
+  const lname = document.getElementById('r-lname').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pw    = document.getElementById('r-password').value;
+  const conf  = document.getElementById('r-confirm').value;
+  let ok = true;
+  const se = (id, v) => document.getElementById('r-err-'+id).classList.toggle('show', v);
+  if(!fname){se('fname',true);ok=false;}else se('fname',false);
+  if(!lname){se('lname',true);ok=false;}else se('lname',false);
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){se('email',true);ok=false;}else se('email',false);
+  if(pw.length<6){se('password',true);ok=false;}else se('password',false);
+  if(pw!==conf){se('confirm',true);ok=false;}else se('confirm',false);
+  if(!ok) return;
+
+  fetch('/api/register', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: fname + ' ' + lname, email, password: pw})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.error){ showAlert('reg', data.error); return; }
+    // split name back for frontend display
+    data.user.fname = fname;
+    data.user.lname = lname;
+    currentUser = data.user;
+    showAlert('reg', 'Account created successfully!', 'success');
+    setTimeout(() => launchApp(data.user), 800);
+  })
+  .catch(() => showAlert('reg', 'Server error. Try again.'));
 }
 
 function launchApp(user){
- currentUser=user;
- document.getElementById('authScreen').style.display='none';
- document.getElementById('mainHeader').style.display='flex';
- document.getElementById('mainApp').style.display='block';
- document.getElementById('userAvatar').textContent=user.fname[0].toUpperCase();
- document.getElementById('userName').textContent=user.fname+' '+user.lname;
- document.getElementById('userRole').textContent=user.role;
- document.getElementById('adminNavBtn').style.display=user.role==='admin'?'':'none';
- initApp();
+  currentUser = user;
+
+  const fullName  = user.name || ((user.fname||'') + ' ' + (user.lname||'')).trim();
+  const firstName = user.fname || fullName.split(' ')[0];
+
+  document.getElementById('authScreen').style.display  = 'none';
+  document.getElementById('mainHeader').style.display  = 'flex';
+  document.getElementById('mainApp').style.display     = 'block';
+  document.getElementById('userAvatar').textContent    = firstName[0].toUpperCase();
+  document.getElementById('userName').textContent      = fullName;
+  document.getElementById('userRole').textContent      = user.role;
+  document.getElementById('adminNavBtn').style.display = user.role === 'admin' ? '' : 'none';
+  document.getElementById('page-admin').style.display  = user.role === 'admin' ? '' : 'none';
+
+  initApp();
 }
 
 function doLogout(){
- clearSession();currentUser=null;
- document.getElementById('mainHeader').style.display='none';
- document.getElementById('mainApp').style.display='none';
- document.getElementById('authScreen').style.display='flex';
- document.getElementById('l-email').value='';
- document.getElementById('l-password').value='';
+  fetch('/api/logout', {method:'POST'})
+  .finally(() => {
+    currentUser = null;
+    document.getElementById('mainHeader').style.display = 'none';
+    document.getElementById('mainApp').style.display    = 'none';
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('l-email').value    = '';
+    document.getElementById('l-password').value = '';
+  });
 }
 
 /* 
@@ -134,30 +164,36 @@ function initApp(){
 }
 
 function prefillForm(){
- if(!currentUser) return;
- document.getElementById('f-name').value=currentUser.fname+' '+currentUser.lname;
- document.getElementById('f-email').value=currentUser.email;
+  if(!currentUser) return;
+  const nameEl  = document.getElementById('f-name');
+  const emailEl = document.getElementById('f-email');
+  if(nameEl)  nameEl.value  = currentUser.name  || '';
+  if(emailEl) emailEl.value = currentUser.email || '';
 }
 
 /* Facilities */
 function renderFacilities(){
- const bs=getBookings(),today=todayStr();
- document.getElementById('facilitiesGrid').innerHTML=FACILITIES.map(f=>{
- const busy=bs.filter(b=>b.facilityId===f.id&&b.date===today&&b.status==='confirmed').length;
- const avail=busy<6;
- return`<div class="facility-card" onclick="selectFacility('${f.id}')">
- <div class="facility-card__img"><img src="${f.img}" alt="${f.name}" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>
- <div class="facility-card__body">
- <div class="facility-card__name">${f.name}</div>
- <div class="facility-card__meta">
- <span class="meta-tag">Cap: ${f.capacity}</span>
- ${f.tags.slice(0,2).map(t=>`<span class="meta-tag">${t}</span>`).join('')}
- <span class="meta-tag ${avail?'avail':'busy'}">${avail?' Available':' Busy'}</span>
- </div>
- <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">${f.desc}</div>
- <button class="facility-card__btn">Reserve Now →</button>
- </div></div>`;
- }).join('');
+  const today = todayStr();
+  fetch('/api/facilities')
+  .then(r => r.json())
+  .then(facilities => {
+    fetch(`/api/facilities/0/availability?date=${today}`)
+    .catch(() => ({booked_slots:[]}));
+
+    document.getElementById('facilitiesGrid').innerHTML = facilities.map(f => `
+      <div class="facility-card" onclick="selectFacility('${f.id}')">
+        <div class="facility-card__body">
+          <div class="facility-card__name">${f.name}</div>
+          <div class="facility-card__meta">
+            <span class="meta-tag">Cap: ${f.capacity}</span>
+            <span class="meta-tag">${f.location}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">${f.description||''}</div>
+          <button class="facility-card__btn">Reserve Now →</button>
+        </div>
+      </div>`).join('');
+  })
+  .catch(() => document.getElementById('facilitiesGrid').innerHTML = '<p>Could not load facilities.</p>');
 }
 
 function selectFacility(id){
@@ -167,130 +203,211 @@ function selectFacility(id){
 }
 
 function populateFacilitySelect(){
- const sel=document.getElementById('f-facility');
- sel.innerHTML='<option value="">— Choose a facility —</option>';
- FACILITIES.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.icon+' '+f.name;sel.appendChild(o);});
+  const sel = document.getElementById('f-facility');
+  sel.innerHTML = '<option value="">— Choose a facility —</option>';
+
+  fetch('/api/facilities')
+  .then(r => r.json())
+  .then(facilities => {
+    facilities.forEach(f => {
+      const o = document.createElement('option');
+      o.value = f.id;
+      o.textContent = f.name + (f.type ? ' (' + f.type + ')' : '');
+      sel.appendChild(o);
+    });
+  });
 }
 
 /* Booking form */
 function setMinDate(){
- const t=todayStr();
- const el=document.getElementById('f-date');
- el.min=t;el.value=t;
+  const t   = todayStr();
+  const el  = document.getElementById('f-date');
+  const max = new Date();
+  max.setDate(max.getDate() + 21);
+  el.min   = t;
+  el.max   = max.toISOString().split('T')[0];
+  el.value = t;
+  applyDurationLimits();
 }
 
 function onFacilityChange(){renderSlots();updateSummary();}
 
 function renderSlots(){
- const fid=document.getElementById('f-facility').value;
- const date=document.getElementById('f-date').value;
- const c=document.getElementById('timeSlots');
- selectedSlot=null;
- if(!fid||!date){c.innerHTML=`<div class="slot" style="color:var(--muted);cursor:default;font-size:11px;grid-column:1/-1;text-align:center;padding:12px">Select a facility and date first</div>`;return;}
- const taken=getBookings().filter(b=>b.facilityId===fid&&b.date===date&&b.status==='confirmed').map(b=>b.time);
- c.innerHTML=TIMES.map(function(t){
-  var tk=taken.includes(t);
-  var cls='slot'+(tk?' taken':'');
-  var onclick=tk?'':'pickSlot(this,\''+t+'\')';
-  return '<div class="'+cls+'" onclick="'+onclick+'">'+t+'</div>';
- }).join('');
+  const fid  = document.getElementById('f-facility').value;
+  const date = document.getElementById('f-date').value;
+  const c    = document.getElementById('timeSlots');
+  selectedSlot = null;
+
+  if(!fid || !date){
+    c.innerHTML = `<div class="slot" style="color:var(--muted);cursor:default;font-size:11px;grid-column:1/-1;text-align:center;padding:12px">Select a facility and date first</div>`;
+    return;
+  }
+
+  fetch(`/api/facilities/${fid}/availability?date=${date}`)
+  .then(r => r.json())
+  .then(data => {
+    const takenStarts = (data.booked_slots || []).map(s => s.start_time);
+
+    c.innerHTML = TIMES.map(t => {
+      const tk = takenStarts.includes(t);
+      const cls = 'slot' + (tk ? ' taken' : '');
+      const onclick = tk ? '' : `pickSlot(this,'${t}')`;
+      return `<div class="${cls}" onclick="${onclick}">${t}</div>`;
+    }).join('');
+  })
+  .catch(() => {
+    c.innerHTML = `<div class="slot" style="color:var(--muted);cursor:default;grid-column:1/-1;text-align:center;padding:12px">Could not load slots</div>`;
+  });
 }
 
-function pickSlot(el,t){
- document.querySelectorAll('.slot').forEach(s=>s.classList.remove('selected'));
- el.classList.add('selected');selectedSlot=t;updateSummary();
+function pickSlot(el, t){
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = t;
+  applyDurationLimits();
+  updateSummary();
 }
 
 function updateSummary(){
- const fid=document.getElementById('f-facility').value;
- const f=FACILITIES.find(x=>x.id===fid);
- const date=document.getElementById('f-date').value;
- const dur=parseInt(document.getElementById('f-duration').value);
- const att=document.getElementById('f-attendees').value;
- document.getElementById('sum-icon').innerHTML=f?`<img src="${f.img}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`:'<span style="font-size:24px"></span>';
- document.getElementById('sum-name').textContent=f?f.name:'No facility selected';
- document.getElementById('sum-cap').textContent=f?`Capacity: ${f.capacity}`:'—';
- document.getElementById('sum-date').textContent=date?formatDate(date):'—';
- document.getElementById('sum-time').textContent=selectedSlot||'—';
- document.getElementById('sum-dur').textContent=dur?`${dur}h`:'—';
- document.getElementById('sum-att').textContent=att||'—';
+  const fid  = document.getElementById('f-facility').value;
+  const date = document.getElementById('f-date').value;
+  const dur  = parseInt(document.getElementById('f-duration').value);
+
+  // Facility name from the dropdown text instead of FACILITIES array
+  const sel  = document.getElementById('f-facility');
+  const fname = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+
+  document.getElementById('sum-icon').innerHTML = '<span style="font-size:24px">🏢</span>';
+  document.getElementById('sum-name').textContent = fid ? fname : 'No facility selected';
+  document.getElementById('sum-date').textContent = date ? formatDate(date) : '—';
+  document.getElementById('sum-time').textContent = selectedSlot || '—';
+  document.getElementById('sum-dur').textContent  = dur ? `${dur}h` : '—';
+}
+
+function applyDurationLimits(){
+  const sel = document.getElementById('f-duration');
+  if(!sel) return;
+
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 21); // 3 weeks from today
+  const dateInput = document.getElementById('f-date');
+  if(dateInput){
+    dateInput.max = maxDate.toISOString().split('T')[0];
+  }
+
+  // Default max is 4 hours, but 3 hours if slot is 19:00 or later
+  let maxDur = 4;
+  if(selectedSlot){
+    const hour = parseInt(selectedSlot.split(':')[0]);
+    if(hour >= 19) maxDur = 3;
+  }
+
+  // Remove options beyond the limit
+  Array.from(sel.options).forEach(opt => {
+    const val = parseInt(opt.value);
+    opt.disabled = val > maxDur;
+    opt.title    = val > maxDur ? `Max ${maxDur}h allowed for this time slot` : '';
+  });
+
+  // If current selection exceeds limit, reset it
+  if(parseInt(sel.value) > maxDur) sel.value = String(maxDur);
+
+  updateSummary();
 }
 
 function submitBooking(e){
- if(e && e.preventDefault) e.preventDefault();
- var valid = validateForm();
- if(!valid) return;
- const fid=document.getElementById('f-facility').value;
- const f=FACILITIES.find(x=>x.id===fid);
- const dur=parseInt(document.getElementById('f-duration').value);
- const bk={
- id:'BK'+Date.now(),
- ref:'REF-'+Math.random().toString(36).substr(2,6).toUpperCase(),
- userId:currentUser.id,userEmail:currentUser.email,
- userName:currentUser.fname+' '+currentUser.lname,
- facilityId:fid,facilityName:f.name,
- name:document.getElementById('f-name').value.trim(),
- email:document.getElementById('f-email').value.trim(),
- date:document.getElementById('f-date').value,
- time:selectedSlot,duration:dur,
- attendees:document.getElementById('f-attendees').value,
- notes:document.getElementById('f-notes').value,status:'pending',
- createdAt:new Date().toISOString(),
- };
- try{const bs=getBookings();bs.unshift(bk);saveBookings(bs);}catch(err){alert('Storage error: '+err.message);return;}
- updateStats();renderBookingList();renderFacilities();
- 
- document.getElementById('modalRef').textContent=bk.ref;
- document.getElementById('modalOverlay').classList.add('show');
- document.getElementById('bookingForm').reset();
- setMinDate();prefillForm();selectedSlot=null;renderSlots();updateSummary();
+  if(e && e.preventDefault) e.preventDefault();
+  if(!validateForm()) return;
+
+  const fid    = document.getElementById('f-facility').value;
+  const date   = document.getElementById('f-date').value;
+  const dur    = parseInt(document.getElementById('f-duration').value);
+  const [h, m] = selectedSlot.split(':').map(Number);
+  const endH   = String(h + dur).padStart(2, '0');
+  const endMin = String(m).padStart(2, '0');
+
+  // Combine date + time into full ISO strings
+  const start_time = `${date}T${selectedSlot}`;
+  const end_time   = `${date}T${endH}:${endMin}`;
+
+  fetch('/api/bookings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      facility_id: parseInt(fid),
+      start_time,
+      end_time,
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.error){ alert(data.error); return; }
+    document.getElementById('modalRef').textContent = 'BK-' + data.booking.id;
+    document.getElementById('modalOverlay').classList.add('show');
+    document.getElementById('bookingForm').reset();
+    setMinDate(); prefillForm(); selectedSlot = null; renderSlots(); updateSummary();
+    updateStats(); renderBookingList(); renderFacilities();
+  })
+  .catch(() => alert('Server error. Try again.'));
 }
 
 function validateForm(){
- let ok=true;
- const chk=[
- ['f-facility','err-facility',v=>v!==''],
- ['f-name','err-name',v=>v.trim().length>1],
- ['f-email','err-email',v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)],
- ['f-date','err-date',v=>v!==''],
- ['f-attendees','err-attendees',v=>v>0],
- ];
- chk.forEach(([id,eid,fn])=>{
- const el=document.getElementById(id),er=document.getElementById(eid);
- if(!fn(el.value)){el.classList.add('err');er.classList.add('show');ok=false;}
- else{el.classList.remove('err');er.classList.remove('show');}
- });
- if(!selectedSlot){document.getElementById('err-slot').classList.add('show');ok=false;}
- else document.getElementById('err-slot').classList.remove('show');
- return ok;
+  let ok = true;
+  const chk = [
+    ['f-facility', 'err-facility', v => v !== ''],
+    ['f-date',     'err-date',     v => v !== ''],
+  ];
+  chk.forEach(([id, eid, fn]) => {
+    const el = document.getElementById(id);
+    const er = document.getElementById(eid);
+    if(!el || !er) return;
+    if(!fn(el.value)){ el.classList.add('err'); er.classList.add('show'); ok = false; }
+    else             { el.classList.remove('err'); er.classList.remove('show'); }
+  });
+  if(!selectedSlot){ document.getElementById('err-slot').classList.add('show'); ok = false; }
+  else               document.getElementById('err-slot').classList.remove('show');
+  return ok;
 }
 
 /* My Bookings */
 function renderBookingList(){
- const list=document.getElementById('bookingList');
- const all=getBookings().filter(b=>b.userId===currentUser.id);
- const filtered=currentFilter==='all'?all:all.filter(b=>b.status===currentFilter);
- if(!filtered.length){
- list.innerHTML=`<div class="empty-state"><p>No ${currentFilter==='all'?'':currentFilter+' '}bookings found.</p></div>`;
- return;
- }
- list.innerHTML=filtered.map((b,i)=>`
- <div class="booking-item" style="animation-delay:${i*.04}s">
- <div class="booking-icon"><img src="${(FACILITIES.find(x=>x.id===b.facilityId)||{}).img||''}" alt="${b.facilityName}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/></div>
- <div>
- <div class="booking-name">${b.facilityName}</div>
- <div class="booking-details">
- <span>Date: ${formatDate(b.date)}</span>
- <span>Time: ${b.time} · ${b.duration}h</span>
- <span>Attendees: ${b.attendees}</span>
- </div>
- <div style="font-size:11px;color:var(--muted);margin-top:4px">REF: ${b.ref}</div>
- </div>
- <div class="booking-actions">
- <span class="status-badge ${b.status}">${b.status}</span>
+  const list = document.getElementById('bookingList');
+  list.innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
 
- </div>
- </div>`).join('');
+  fetch('/api/bookings')
+  .then(r => r.json())
+  .then(all => {
+    const filtered = currentFilter === 'all' ? all : all.filter(b => b.status === currentFilter);
+    if(!filtered.length){
+      list.innerHTML = `<div class="empty-state"><p>No ${currentFilter==='all'?'':currentFilter+' '}bookings found.</p></div>`;
+      return;
+    }
+    list.innerHTML = filtered.map((b, i) => `
+      <div class="booking-item" style="animation-delay:${i*.04}s">
+        <div>
+          <div class="booking-name">${b.facility_name}</div>
+          <div class="booking-details">
+            <span>Date: ${formatDate(b.date)}</span>
+            <span>Time: ${b.start_time} – ${b.end_time}</span>
+          </div>
+        </div>
+        <div class="booking-actions">
+          <span class="status-badge ${b.status}">${b.status}</span>
+          ${b.status==='pending'?`<button class="btn-cancel" onclick="cancelBooking(${b.id})">Cancel</button>`:''}
+        </div>
+      </div>`).join('');
+  })
+  .catch(() => list.innerHTML = '<div class="empty-state"><p>Could not load bookings.</p></div>');
+}
+
+function cancelBooking(id){
+  fetch(`/api/bookings/${id}/cancel`, {method:'POST'})
+  .then(r => r.json())
+  .then(data => {
+    if(data.error){ alert(data.error); return; }
+    renderBookingList();
+    updateStats();
+  });
 }
 
 function filterBookings(f,btn){
@@ -324,18 +441,15 @@ function switchAdminTab(tab, btn){
 }
 
 function renderAdminDashboard(){
-  var users = getUsers();
-  var bs    = getBookings();
-  var pending   = bs.filter(function(b){ return b.status==='pending'; }).length;
-  var approved  = bs.filter(function(b){ return b.status==='confirmed'; }).length;
-  var rejected  = bs.filter(function(b){ return b.status==='rejected'; }).length;
-
-  document.getElementById('adminSummary').innerHTML =
-    '<div class="admin-stat"><div class="admin-stat-icon blue">USR</div><div><div class="admin-stat-val">'+users.length+'</div><div class="admin-stat-label">Total Users</div></div></div>'+
-    '<div class="admin-stat"><div class="admin-stat-icon orange">PND</div><div><div class="admin-stat-val">'+pending+'</div><div class="admin-stat-label">Pending</div></div></div>'+
-    '<div class="admin-stat"><div class="admin-stat-icon green">APR</div><div><div class="admin-stat-val">'+approved+'</div><div class="admin-stat-label">Approved</div></div></div>'+
-    '<div class="admin-stat"><div class="admin-stat-icon red">REJ</div><div><div class="admin-stat-val">'+rejected+'</div><div class="admin-stat-label">Rejected</div></div></div>';
-
+  fetch('/api/admin/stats')
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('adminSummary').innerHTML =
+      '<div class="admin-stat"><div class="admin-stat-icon blue">USR</div><div><div class="admin-stat-val">'+data.total_users+'</div><div class="admin-stat-label">Total Users</div></div></div>'+
+      '<div class="admin-stat"><div class="admin-stat-icon orange">PND</div><div><div class="admin-stat-val">'+data.pending_bookings+'</div><div class="admin-stat-label">Pending</div></div></div>'+
+      '<div class="admin-stat"><div class="admin-stat-icon green">APR</div><div><div class="admin-stat-val">'+data.total_bookings+'</div><div class="admin-stat-label">Total Bookings</div></div></div>'+
+      '<div class="admin-stat"><div class="admin-stat-icon red">FAC</div><div><div class="admin-stat-val">'+data.total_facilities+'</div><div class="admin-stat-label">Facilities</div></div></div>';
+  });
   renderAdminBookings();
   resetCrudForm();
 }
@@ -349,15 +463,48 @@ function filterAdminBookings(filter, btn){
 }
 
 function renderAdminBookings(){
-  var bs = getBookings();
-  var filtered = _adminBookingFilter==='all' ? bs : bs.filter(function(b){ return b.status===_adminBookingFilter; });
-  document.getElementById('bookingsCount').textContent = '('+filtered.length+')';
+  const url = _adminBookingFilter === 'all'
+    ? '/api/admin/bookings'
+    : '/api/admin/bookings?status=' + _adminBookingFilter;
 
-  if(!filtered.length){
+  fetch(url)
+  .then(r => r.json())
+  .then(bs => {
+    document.getElementById('bookingsCount').textContent = '(' + bs.length + ')';
+
+    if(!bs.length){
+      document.getElementById('adminBookingsBody').innerHTML =
+        '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">No bookings found.</td></tr>';
+      return;
+    }
+
+    document.getElementById('adminBookingsBody').innerHTML = bs.map(function(b){
+      var actions = '';
+      if(b.status === 'pending'){
+        actions = '<button class="action-approve" onclick="adminSetBookingStatus('+b.id+',\'approved\')">Approve</button>'+
+                  '<button class="action-reject"  onclick="adminSetBookingStatus('+b.id+',\'rejected\')">Reject</button>';
+      } else if(b.status === 'approved'){
+        actions = '<button class="action-reject" onclick="adminSetBookingStatus('+b.id+',\'rejected\')">Reject</button>';
+      } else if(b.status === 'rejected'){
+        actions = '<button class="action-approve" onclick="adminSetBookingStatus('+b.id+',\'approved\')">Approve</button>';
+      } else {
+        actions = '<span style="color:var(--muted);font-size:11px">—</span>';
+      }
+      return '<tr>'+
+        '<td><span class="tbl-name">'+b.facility_name+'</span></td>'+
+        '<td><div class="tbl-name">'+b.user_name+'</div><div class="tbl-sub">'+b.user_email+'</div></td>'+
+        '<td><div>'+b.start_time+'</div></td>'+
+        '<td>'+b.end_time+'</td>'+
+        '<td><span class="status-badge '+b.status+'">'+b.status+'</span></td>'+
+        '<td>'+actions+'</td>'+
+      '</tr>';
+    }).join('');
+  })
+  .catch(() => {
     document.getElementById('adminBookingsBody').innerHTML =
-      '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">No bookings found.</td></tr>';
-    return;
-  }
+      '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Could not load bookings.</td></tr>';
+  });
+}
 
   document.getElementById('adminBookingsBody').innerHTML = filtered.map(function(b){
     var actions = '';
@@ -380,19 +527,23 @@ function renderAdminBookings(){
       '<td>'+actions+'</td>'+
     '</tr>';
   }).join('');
-}
+
 
 function adminSetBookingStatus(id, status){
-  var bs = getBookings();
-  var b  = bs.find(function(x){ return x.id===id; });
-  if(!b) return;
-  b.status = status;
-  saveBookings(bs);
-  renderAdminBookings();
-  renderAdminDashboard();
-  renderFacilities();
-  renderBookingList();
-  showCrudToast('Booking '+status+'.');
+  const endpoint = status === 'approved'
+    ? '/api/admin/bookings/'+id+'/approve'
+    : '/api/admin/bookings/'+id+'/reject';
+
+  fetch(endpoint, {method: 'POST'})
+  .then(r => r.json())
+  .then(data => {
+    if(data.error){ alert(data.error); return; }
+    showCrudToast('Booking ' + status + '.');
+    renderAdminBookings();
+    renderAdminDashboard();
+    renderBookingList();
+  })
+  .catch(() => alert('Server error. Try again.'));
 }
 
 /* ── USERS PANEL ── */
@@ -537,13 +688,23 @@ function showCrudToast(msg){
 
 /* Stats */
 function updateStats(){
- if(!currentUser) return;
- const bs=getBookings();
- const mine=bs.filter(b=>b.userId===currentUser.id&&b.status==='confirmed');
- document.getElementById('stat-bookings').textContent=mine.length;
- const today=todayStr();
- const takenF=new Set(bs.filter(b=>b.date===today&&b.status!=='cancelled').map(b=>b.facilityId));
- document.getElementById('stat-avail').textContent=FACILITIES.length-takenF.size;
+  if(!currentUser) return;
+  if(currentUser.role === 'admin'){
+    fetch('/api/admin/stats')
+    .then(r => r.json())
+    .then(data => {
+      if(data.error) return;
+      document.getElementById('stat-bookings').textContent = data.total_bookings;
+      document.getElementById('stat-avail').textContent   = data.total_facilities;
+    });
+  } else {
+    fetch('/api/bookings')
+    .then(r => r.json())
+    .then(bookings => {
+      if(!Array.isArray(bookings)) return;
+      document.getElementById('stat-bookings').textContent = bookings.filter(b => b.status === 'approved').length;
+    });
+  }
 }
 
 /* Utils */

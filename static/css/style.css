@@ -154,6 +154,9 @@ header{position:sticky;top:0;z-index:50;background:rgba(8,12,20,.9);backdrop-fil
 .empty-state .empty-icon{font-size:52px;margin-bottom:14px}
 .empty-state p{font-size:14px}
 
+.btn-cancel{background: rgba(255,77,109,.1);color: var(--red);border: 1px solid rgba(255,77,109,.3);padding: 4px 12px;border-radius: 6px;font-size: 12px;cursor: pointer;transition: background .2s;}
+.btn-cancel:hover{background: rgba(255,77,109,.2);}
+
 /* ADMIN */
 .admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:32px}
 .admin-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;display:flex;align-items:center;gap:16px}
