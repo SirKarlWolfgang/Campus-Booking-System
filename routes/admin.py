@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, session
 from sqlalchemy.orm import Session
 from database import engine
 from models.models import User, Facility, Booking, BookingStatus, UserRole
+import bcrypt
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -50,7 +51,7 @@ def all_bookings():
             user     = db.query(User).filter_by(user_id=b.user_id).first()
             facility = db.query(Facility).filter_by(facility_id=b.facility_id).first()
             result.append({
-                'id':            b.booking_id,
+                'booking_id':    b.booking_id,
                 'user_id':       b.user_id,
                 'user_name':     user.username    if user     else 'Unknown',
                 'user_email':    user.email       if user     else '',
@@ -118,18 +119,19 @@ def add_facility():
     if not require_admin():
         return jsonify({'error': 'Admin access required'}), 403
 
-    data = request.get_json()
+    data        = request.get_json()
     name        = data.get('name', '').strip()
     ftype       = data.get('type', '').strip()
     capacity    = data.get('capacity', 0)
     description = data.get('description', '').strip()
+    is_active   = data.get('is_active', True)
 
     if not name:
         return jsonify({'error': 'name is required'}), 400
 
     with Session(engine) as db:
         facility = Facility(name=name, type=ftype, capacity=capacity,
-                            description=description, is_active=True)
+                            description=description, is_active=is_active)
         db.add(facility)
         db.commit()
         db.refresh(facility)
@@ -187,3 +189,58 @@ def list_users():
             'email': u.email,
             'role':  u.role.value,
         } for u in users]), 200
+
+
+@admin_bp.route('/api/admin/users', methods=['POST'])
+def create_user():
+    if not require_admin():
+        return jsonify({'error': 'Admin access required'}), 403
+
+    data = request.get_json()
+
+    with Session(engine) as db:
+        if db.query(User).filter_by(email=data['email']).first():
+            return jsonify({'error': 'Email already registered.'}), 400
+        hashed = bcrypt.hashpw(data['password'].encode(), bcrypt.gensalt()).decode()
+        role   = UserRole.admin if data.get('role') == 'admin' else UserRole.student
+        user   = User(username=data['username'], email=data['email'],
+                      password_hash=hashed, role=role)
+        db.add(user)
+        db.commit()
+        return jsonify({'message': 'User created.'}), 201
+
+
+@admin_bp.route('/api/admin/users/<int:uid>', methods=['PUT'])
+def update_user(uid):
+    if not require_admin():
+        return jsonify({'error': 'Admin access required'}), 403
+
+    data = request.get_json()
+
+    with Session(engine) as db:
+        user = db.query(User).filter_by(user_id=uid).first()
+        if not user:
+            return jsonify({'error': 'User not found.'}), 404
+        if 'username' in data: user.username = data['username']
+        if 'email'    in data: user.email    = data['email']
+        if 'role'     in data:
+            user.role = UserRole.admin if data['role'] == 'admin' else UserRole.student
+        if data.get('password'):
+            user.password_hash = bcrypt.hashpw(
+                data['password'].encode(), bcrypt.gensalt()).decode()
+        db.commit()
+        return jsonify({'message': 'User updated.'}), 200
+
+
+@admin_bp.route('/api/admin/users/<int:uid>', methods=['DELETE'])
+def delete_user(uid):
+    if not require_admin():
+        return jsonify({'error': 'Admin access required'}), 403
+
+    with Session(engine) as db:
+        user = db.query(User).filter_by(user_id=uid).first()
+        if not user:
+            return jsonify({'error': 'User not found.'}), 404
+        db.delete(user)
+        db.commit()
+        return jsonify({'message': 'User deleted.'}), 200

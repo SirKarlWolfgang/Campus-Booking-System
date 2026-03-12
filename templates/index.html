@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>BookSpace — Facility Booking</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
 <body>
@@ -140,18 +140,6 @@
  </select>
  <div class="field-err" id="err-facility">Please select a facility.</div>
  </div>
- <!-- <div class="form-row">
- <div class="form-group">
- <label>Full Name</label>
- <input type="text" id="f-name" placeholder="John Smith"/>
- <div class="field-err" id="err-name">Name is required.</div>
- </div>
- <div class="form-group">
- <label>Email</label>
- <input type="email" id="f-email" placeholder="you@example.com"/>
- <div class="field-err" id="err-email">Valid email required.</div>
- </div>
- </div> -->
  <div class="form-row">
  <div class="form-group">
  <label>Date</label>
@@ -216,8 +204,9 @@
  <div class="bookings-header">
  <div class="filter-tabs">
  <button class="filter-tab active" onclick="filterBookings('all',this)">All</button>
- <button class="filter-tab" onclick="filterBookings('confirmed',this)">Confirmed</button>
- <button class="filter-tab" onclick="filterBookings('cancelled',this)">Cancelled</button>
+ <button class="filter-tab" onclick="filterBookings('approved',this)">Approved</button>
+ <button class="filter-tab" onclick="filterBookings('rejected',this)">Rejected</button>
+
  </div>
  </div>
  <div class="booking-list" id="bookingList"></div>
@@ -236,6 +225,7 @@
     <div class="admin-tabs" id="adminTabs">
       <button class="admin-tab active" onclick="switchAdminTab('bookings',this)">Bookings</button>
       <button class="admin-tab" onclick="switchAdminTab('users',this)">Users</button>
+      <button class="admin-tab" onclick="switchAdminTab('facilities',this)">Facilities</button>
     </div>
 
     <!-- BOOKINGS PANEL -->
@@ -319,6 +309,55 @@
         <tbody id="usersTableBody"></tbody>
       </table>
     </div>
+
+    <!-- FACILITIES PANEL -->
+    <div id="adminFacilitiesPanel" class="hidden">
+      <div class="crud-card" style="margin-top:24px">
+        <div class="crud-card-header">
+          <h2 id="facilityFormTitle">Add Facility</h2>
+          <button class="crud-close hidden" id="facilityCloseBtn" onclick="resetFacilityForm()">Cancel</button>
+        </div>
+        <div class="crud-form-grid">
+          <div class="form-group">
+            <label>Facility Name</label>
+            <input type="text" id="cf-name" placeholder="e.g. Main Hall"/>
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <input type="text" id="cf-type" placeholder="e.g. hall, lab, sports"/>
+          </div>
+          <div class="form-group">
+            <label>Capacity</label>
+            <input type="number" id="cf-capacity" placeholder="e.g. 50" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="cf-description" placeholder="Optional description"/>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px">
+            <input type="checkbox" id="cf-active" checked style="width:16px;height:16px;accent-color:var(--accent)"/>
+            <label for="cf-active" style="margin:0">Active</label>
+          </div>
+        </div>
+        <div style="margin-top:20px">
+          <button class="submit-btn" id="facilitySubmitBtn" onclick="submitFacilityForm()" style="max-width:180px;padding:12px">Add Facility</button>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top:36px;display:flex;align-items:center;flex-wrap:wrap;gap:12px">
+        Facilities <span id="facilitiesCount"></span>
+        <div style="margin-left:auto">
+          <input type="text" id="facilitySearch" placeholder="Search facilities..." onkeyup="renderFacilitiesTable()"
+            style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;font-family:var(--font-b);font-size:13px;outline:none;width:220px;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+        </div>
+      </div>
+      <table class="admin-table">
+        <thead><tr>
+          <th>Name</th><th>Type</th><th>Capacity</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="facilitiesTableBody"></tbody>
+      </table>
+    </div>
   </div>
 
 <!-- SUCCESS MODAL -->
@@ -360,20 +399,7 @@
   </div>
 </div>
 
-<script src="/static/js/main.js"></script>
-
-
-<!-- DELETE USER MODAL -->
-<div class="modal-overlay" id="deleteModal">
-  <div class="modal">
-    <h2 style="margin-bottom:10px">Delete User?</h2>
-    <p>This will permanently remove the user and all their bookings. This cannot be undone.</p>
-    <div class="modal-btns" style="margin-top:24px">
-      <button class="modal-btn secondary" onclick="closeDeleteModal()">Cancel</button>
-      <button class="modal-btn primary" style="background:var(--red);border-color:var(--red)" onclick="confirmDeleteUser()">Delete</button>
-    </div>
-  </div>
-</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 </body>
 </html>
