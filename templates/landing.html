@@ -1,638 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>BookSpace — Campus Facility Booking</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BookSpace — DUT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg:       #0a0a0f;
-    --surface:  #12121a;
-    --border:   rgba(255,255,255,0.07);
-    --text:     #f0f0f5;
-    --muted:    #6b6b80;
-    --accent:   #7c6af7;
-    --accent2:  #f7796a;
-    --green:    #4ade80;
-  }
+    :root {
+      --bg:     #f5f2ec;
+      --fg:     #1a1a18;
+      --muted:  #8a8680;
+      --rule:   #c8c4bc;
+      --accent: #1a3a6b;
+      --gold:   #8b6914;
+    }
 
-  html { scroll-behavior: smooth; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'DM Sans', sans-serif;
+    }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    overflow-x: hidden;
-    min-height: 100vh;
-  }
+    /* Layout */
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 0 64px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-  /* ── Noise overlay ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 36px 0 32px;
+      border-bottom: 1px solid var(--rule);
+      opacity: 0;
+      animation: fadeIn 0.8s ease 0.1s forwards;
+    }
 
-  /* ── Glow blobs ── */
-  .blob {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(120px);
-    pointer-events: none;
-    z-index: 0;
-  }
-  .blob-1 {
-    width: 600px; height: 600px;
-    background: rgba(124,106,247,0.12);
-    top: -200px; left: -100px;
-    animation: drift 12s ease-in-out infinite alternate;
-  }
-  .blob-2 {
-    width: 400px; height: 400px;
-    background: rgba(247,121,106,0.08);
-    bottom: 100px; right: -100px;
-    animation: drift 15s ease-in-out infinite alternate-reverse;
-  }
-  @keyframes drift {
-    from { transform: translate(0,0) scale(1); }
-    to   { transform: translate(40px, 30px) scale(1.05); }
-  }
+    .institution {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
-  /* ── Nav ── */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    padding: 20px 48px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid transparent;
-    transition: background .3s, border-color .3s;
-  }
-  nav.scrolled {
-    background: rgba(10,10,15,0.85);
-    backdrop-filter: blur(16px);
-    border-color: var(--border);
-  }
-  .nav-logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: var(--text);
-  }
-  .nav-logo-dot {
-    width: 8px; height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 12px var(--accent);
-  }
-  .nav-cta {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-  .btn-ghost {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 9px 20px;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: color .2s, border-color .2s;
-  }
-  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .inst-name {
+      font-size: 11px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 400;
+    }
 
-  .btn-primary {
-    background: var(--accent);
-    border: none;
-    color: #fff;
-    padding: 10px 22px;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: none;
-    transition: opacity .2s, transform .2s;
-    box-shadow: 0 0 24px rgba(124,106,247,0.3);
-  }
-  .btn-primary:hover { opacity: .85; transform: translateY(-1px); }
+    .inst-sub {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+    }
 
-  /* ── Hero ── */
-  .hero {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 120px 24px 80px;
-  }
+    .year {
+      font-family: 'EB Garamond', serif;
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+    }
 
-  .hero-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(124,106,247,0.1);
-    border: 1px solid rgba(124,106,247,0.25);
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    border-radius: 100px;
-    margin-bottom: 32px;
-    opacity: 0;
-    animation: fadeUp .6s .1s forwards;
-  }
-  .hero-eyebrow-dot {
-    width: 6px; height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent);
-  }
+    /* Main */
+    main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 0 60px;
+    }
 
-  .hero-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: clamp(42px, 8vw, 88px);
-    line-height: 1.0;
-    letter-spacing: -0.03em;
-    max-width: 900px;
-    opacity: 0;
-    animation: fadeUp .7s .2s forwards;
-  }
-  .hero-title .accent-word {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeIn 0.7s ease 0.3s forwards;
+    }
 
-  .hero-sub {
-    margin-top: 24px;
-    font-size: 18px;
-    color: var(--muted);
-    max-width: 500px;
-    line-height: 1.7;
-    opacity: 0;
-    animation: fadeUp .7s .35s forwards;
-  }
+    .headline {
+      font-family: 'EB Garamond', serif;
+      font-size: clamp(52px, 8vw, 110px);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -1px;
+      color: var(--fg);
+      max-width: 800px;
+    }
 
-  .hero-actions {
-    margin-top: 40px;
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    justify-content: center;
-    opacity: 0;
-    animation: fadeUp .7s .5s forwards;
-  }
-  .btn-hero {
-    padding: 14px 32px;
-    font-size: 16px;
-    border-radius: 10px;
-  }
+    .headline .word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: wordUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
 
-  .hero-scroll {
-    margin-top: 80px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    opacity: 0;
-    animation: fadeUp .7s .8s forwards;
-  }
-  .hero-scroll-line {
-    width: 1px; height: 40px;
-    background: linear-gradient(to bottom, var(--muted), transparent);
-    animation: scrollPulse 2s ease-in-out infinite;
-  }
-  @keyframes scrollPulse {
-    0%,100% { opacity: .3; }
-    50%      { opacity: 1; }
-  }
+    .headline .word:nth-child(1) { animation-delay: 0.35s; }
+    .headline .word:nth-child(2) { animation-delay: 0.45s; font-style: italic; color: var(--accent); }
+    .headline .word:nth-child(3) { animation-delay: 0.55s; }
+    .headline .word:nth-child(4) { animation-delay: 0.65s; font-style: italic; }
+    .headline .br { display: block; height: 0; }
 
-  /* ── Stats strip ── */
-  .stats {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: center;
-    gap: 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
-  }
-  .stat-item {
-    flex: 1;
-    max-width: 240px;
-    padding: 40px 32px;
-    text-align: center;
-    border-right: 1px solid var(--border);
-  }
-  .stat-item:last-child { border-right: none; }
-  .stat-val {
-    font-family: 'Syne', sans-serif;
-    font-size: 40px;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--text), var(--muted));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .stat-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .rule-line {
+      width: 60px;
+      height: 1px;
+      background: var(--gold);
+      margin: 40px 0;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 0.9s forwards;
+    }
 
-  /* ── Features ── */
-  .section {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 100px 24px;
-  }
-  .section-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 16px;
-  }
-  .section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(28px, 4vw, 44px);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    max-width: 560px;
-    margin-bottom: 64px;
-  }
+    .body-text {
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.7;
+      max-width: 420px;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 1s forwards;
+    }
 
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-  .feature-card {
-    background: var(--surface);
-    padding: 36px;
-    transition: background .2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .feature-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(124,106,247,0.05), transparent);
-    opacity: 0;
-    transition: opacity .3s;
-  }
-  .feature-card:hover { background: #16161f; }
-  .feature-card:hover::before { opacity: 1; }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      margin-top: 52px;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 1.1s forwards;
+    }
 
-  .feature-icon {
-    width: 44px; height: 44px;
-    border-radius: 10px;
-    background: rgba(124,106,247,0.12);
-    border: 1px solid rgba(124,106,247,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    margin-bottom: 20px;
-  }
-  .feature-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-  .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+    .btn-enter {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 15px 36px;
+      border-radius: 1px;
+      transition: background 0.2s, transform 0.2s;
+    }
 
-  /* ── How it works ── */
-  .steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    max-width: 640px;
-  }
-  .step {
-    display: flex;
-    gap: 28px;
-    padding: 32px 0;
-    border-bottom: 1px solid var(--border);
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: opacity .5s, transform .5s;
-  }
-  .step.visible { opacity: 1; transform: none; }
-  .step:last-child { border-bottom: none; }
-  .step-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    min-width: 28px;
-    padding-top: 4px;
-  }
-  .step-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .step-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+    .btn-enter:hover {
+      background: #0f2a52;
+      transform: translateY(-1px);
+    }
 
-  /* ── CTA ── */
-  .cta-section {
-    position: relative;
-    z-index: 1;
-    padding: 80px 24px;
-    text-align: center;
-  }
-  .cta-box {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 72px 48px;
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    background: var(--surface);
-    position: relative;
-    overflow: hidden;
-  }
-  .cta-box::before {
-    content: '';
-    position: absolute;
-    top: -1px; left: 50%;
-    transform: translateX(-50%);
-    width: 200px; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  }
-  .cta-title {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(28px, 4vw, 40px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    margin-bottom: 16px;
-  }
-  .cta-sub { color: var(--muted); font-size: 16px; margin-bottom: 36px; line-height: 1.6; }
-  .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-enter .arr { transition: transform 0.2s; }
+    .btn-enter:hover .arr { transform: translateX(4px); }
 
-  /* ── Footer ── */
-  footer {
-    position: relative;
-    z-index: 1;
-    border-top: 1px solid var(--border);
-    padding: 32px 48px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: var(--muted);
-    font-size: 13px;
-  }
-  .footer-logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 16px;
-    color: var(--text);
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      font-family: 'EB Garamond', serif;
+    }
 
-  /* ── Animations ── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--rule);
+      padding: 28px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 1.2s forwards;
+    }
 
-  /* ── Status pill ── */
-  .status-live {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(74,222,128,0.1);
-    border: 1px solid rgba(74,222,128,0.2);
-    color: var(--green);
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 100px;
-  }
-  .status-live-dot {
-    width: 5px; height: 5px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
-    50%      { opacity: .7; box-shadow: 0 0 0 4px rgba(74,222,128,0); }
-  }
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
 
-  @media(max-width: 640px){
-    nav { padding: 16px 20px; }
-    .stat-item { padding: 28px 16px; }
-    .cta-box { padding: 40px 24px; }
-    footer { flex-direction: column; gap: 12px; text-align: center; }
-  }
-</style>
+    .bookspace-mark {
+      font-family: 'EB Garamond', serif;
+      font-size: 18px;
+      color: var(--fg);
+      letter-spacing: 0.5px;
+    }
+
+    .bookspace-mark span {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .footer-meta {
+      font-size: 11px;
+      color: var(--rule);
+    }
+
+    .footer-right {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Decorative column line */
+    .col-accent {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 4px;
+      height: 100vh;
+      background: linear-gradient(to bottom, var(--accent) 0%, var(--gold) 100%);
+      opacity: 0;
+      animation: fadeIn 1s ease 0.5s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes wordUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 0 28px; }
+      .headline { font-size: 52px; }
+      footer { flex-direction: column; gap: 12px; align-items: flex-start; }
+    }
+  </style>
 </head>
 <body>
+  <div class="col-accent"></div>
 
-<div class="blob blob-1"></div>
-<div class="blob blob-2"></div>
-
-<!-- Nav -->
-<nav id="nav">
-  <a class="nav-logo" href="#">
-    <div class="nav-logo-dot"></div>
-    BookSpace
-  </a>
-  <div class="nav-cta">
-    <a href="/app?fresh=1" class="btn-ghost">Sign In</a>
-    <a href="/app?fresh=1" class="btn-primary btn-hero" style="padding:9px 20px;font-size:14px">Get Started</a>
-  </div>
-</nav>
-
-<!-- Hero -->
-<section class="hero">
-  <div class="hero-eyebrow">
-    <div class="hero-eyebrow-dot"></div>
-    Campus Facility Booking
-  </div>
-  <h1 class="hero-title">
-    <span class="accent-word"> Welcome</span><br>
-  </h1>
-  <p class="hero-sub">
-    Whoopty Doo!
-  </p>
-  <div class="hero-actions">
-    <a href="/app?fresh=1" class="btn-primary btn-hero">Book a Facility →</a>
-    <a href="#features" class="btn-ghost btn-hero">Learn More</a>
-  </div>
-  <div class="hero-scroll">
-    <div class="hero-scroll-line"></div>
-    Scroll
-  </div>
-</section>
-
-<!-- Stats -->
-<div class="stats">
-  <div class="stat-item">
-    <div class="stat-val">3+</div>
-    <div class="stat-label">Campus Facilities</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-val">24/7</div>
-    <div class="stat-label">Online Booking</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-val">Fast</div>
-    <div class="stat-label">Instant Confirmation</div>
-  </div>
-  <div class="stat-item">
-    <div class="status-live" style="margin:auto">
-      <div class="status-live-dot"></div>
-      System Online
-    </div>
-    <div class="stat-label" style="margin-top:10px">Live Status</div>
-  </div>
-</div>
-
-<!-- Features -->
-<section class="section" id="features">
-  <div class="section-label">What we offer</div>
-  <h2 class="section-title">Everything you need to manage your bookings</h2>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">🏢</div>
-      <div class="feature-name">Browse Facilities</div>
-      <div class="feature-desc">View all available campus spaces — labs, halls, courts — with capacity and availability at a glance.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📅</div>
-      <div class="feature-name">Easy Scheduling</div>
-      <div class="feature-desc">Pick a date, choose a time slot, and confirm your booking in under a minute. No paperwork.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">✅</div>
-      <div class="feature-name">Live Status</div>
-      <div class="feature-desc">Track your bookings in real time — pending, approved, or cancelled — all in one dashboard.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🛡️</div>
-      <div class="feature-name">Admin Control</div>
-      <div class="feature-desc">Admins can approve, reject, and manage all bookings and facilities from a dedicated panel.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔒</div>
-      <div class="feature-name">Secure Accounts</div>
-      <div class="feature-desc">Your data is protected with hashed passwords and secure session management.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">⚡</div>
-      <div class="feature-name">Conflict Prevention</div>
-      <div class="feature-desc">Double bookings are automatically blocked. Time slot limits keep scheduling fair for everyone.</div>
-    </div>
-  </div>
-</section>
-
-<!-- How it works -->
-<section class="section" id="how">
-  <div class="section-label">How it works</div>
-  <h2 class="section-title">Three steps to your booking</h2>
-  <div class="steps" id="stepsContainer">
-    <div class="step">
-      <div class="step-num">01</div>
-      <div>
-        <div class="step-title">Create your account</div>
-        <div class="step-desc">Register with your campus email. Takes less than 30 seconds and you're ready to go.</div>
+  <div class="page">
+    <header>
+      <div class="institution">
+        <span class="inst-name">Durban University of Technology</span>
+        <span class="inst-sub">Facility Management System</span>
       </div>
-    </div>
-    <div class="step">
-      <div class="step-num">02</div>
-      <div>
-        <div class="step-title">Find a facility</div>
-        <div class="step-desc">Browse available spaces, check capacity, pick a date and time slot that works for you.</div>
+      <span class="year">Est. 2026</span>
+    </header>
+
+    <main>
+      <p class="eyebrow">Campus Resource Portal</p>
+
+      <h1 class="headline">
+        <span class="word">Reserve</span>&nbsp;
+        <span class="word">spaces,</span><span class="br"></span>
+        <span class="word">not</span>&nbsp;
+        <span class="word">paperwork.</span>
+      </h1>
+
+      <div class="rule-line"></div>
+
+      <p class="body-text">
+        Book labs, lecture halls, and sports facilities across campus — instantly, without forms or phone calls.
+      </p>
+
+      <div class="actions">
+        <a href="/app?fresh=1" class="btn-enter">
+          Enter Portal <span class="arr">→</span>
+        </a>
+        <span class="note">Sign in or register to continue</span>
       </div>
-    </div>
-    <div class="step">
-      <div class="step-num">03</div>
-      <div>
-        <div class="step-title">Confirm and go</div>
-        <div class="step-desc">Submit your booking and wait for admin approval. You'll see the status update live in your dashboard.</div>
+    </main>
+
+    <footer>
+      <div class="footer-left">
+        <span class="bookspace-mark">Book<span>Space</span></span>
+        <span class="footer-meta">PBDV301 / PBDE401 &mdash; Group 8 &amp; 40</span>
       </div>
-    </div>
+      <span class="footer-right">2026 Academic Year</span>
+    </footer>
   </div>
-</section>
-
-<!-- CTA -->
-<section class="cta-section">
-  <div class="cta-box">
-    <h2 class="cta-title">Ready to book your space?</h2>
-    <p class="cta-sub">Join your fellow students and staff already using BookSpace to reserve campus facilities.</p>
-    <div class="cta-btns">
-      <a href="/app?fresh=1" class="btn-primary btn-hero">Get Started Free →</a>
-      <a href="/app?fresh=1" class="btn-ghost btn-hero">Sign In</a>
-    </div>
-  </div>
-</section>
-
-<!-- Footer -->
-<footer>
-  <a class="footer-logo" href="#">
-    <div class="nav-logo-dot"></div>
-    BookSpace
-  </a>
-  <div>Campus Facility Booking System</div>
-</footer>
-
-<script>
-  // Sticky nav
-  const nav = document.getElementById('nav');
-  window.addEventListener('scroll', () => {
-    nav.classList.toggle('scrolled', window.scrollY > 40);
-  });
-
-  // Animate steps on scroll
-  const steps = document.querySelectorAll('.step');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach((entry, i) => {
-      if(entry.isIntersecting){
-        setTimeout(() => entry.target.classList.add('visible'), i * 120);
-      }
-    });
-  }, { threshold: 0.2 });
-  steps.forEach(s => observer.observe(s));
-</script>
 </body>
 </html>

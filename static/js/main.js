@@ -123,8 +123,15 @@ function launchApp(user){
   document.getElementById('userAvatar').textContent    = firstName[0].toUpperCase();
   document.getElementById('userName').textContent      = fullName;
   document.getElementById('userRole').textContent      = user.role;
-  document.getElementById('adminNavBtn').style.display = user.role === 'admin' ? '' : 'none';
+  const aBtn=document.getElementById('adminNavBtn');if(user.role==='admin'){aBtn.classList.remove('hidden');aBtn.style.display='';}else{aBtn.style.display='none';}
   document.getElementById('page-admin').style.display  = user.role === 'admin' ? '' : 'none';
+  if(user.role === 'admin'){
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+      const oc = b.getAttribute('onclick')||'';
+      if(oc.includes('facilities')||oc.includes('booking')||oc.includes('mybookings')) b.style.display='none';
+    });
+    showPage('admin', document.getElementById('adminNavBtn'), true);
+  }
 
   initApp();
 }
@@ -426,8 +433,11 @@ function switchAdminTab(tab, btn){
   document.querySelectorAll('.admin-tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
   document.getElementById('adminBookingsPanel').style.display   = tab==='bookings'   ? '' : 'none';
-  document.getElementById('adminUsersPanel').style.display      = tab==='users'      ? '' : 'none';
-  document.getElementById('adminFacilitiesPanel').style.display = tab==='facilities' ? '' : 'none';
+  const up = document.getElementById('adminUsersPanel');
+  const fp = document.getElementById('adminFacilitiesPanel');
+  up.classList.remove('hidden'); fp.classList.remove('hidden');
+  up.style.display      = tab==='users'      ? '' : 'none';
+  fp.style.display = tab==='facilities' ? '' : 'none';
   if(tab==='bookings')   renderAdminBookings();
   if(tab==='users')      renderUsersTable();
   if(tab==='facilities') renderFacilitiesTable();
@@ -471,6 +481,11 @@ function filterAdminBookings(filter, btn){
   renderAdminBookings();
 }
 
+function fmtDate(dtStr){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d = new Date(dtStr.replace(' ','T'));
+  return String(d.getDate()).padStart(2,'0')+'-'+months[d.getMonth()]+'-'+d.getFullYear()+' '+dtStr.split(' ')[1];
+}
 function renderAdminBookings(){
   var url = _adminBookingFilter === 'all'
     ? '/api/admin/bookings'
@@ -837,14 +852,20 @@ function formatDate(s){
  const d=new Date(s+'T00:00:00');
  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 }
-function showPage(name,btn){
+function showPage(name,btn,skipHistory){
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
  document.getElementById('page-'+name).classList.add('active');
  if(btn) btn.classList.add('active');
+ else document.querySelectorAll('.nav-btn').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+name+"'")) b.classList.add('active');});
  if(name==='mybookings') renderBookingList();
  if(name==='admin') renderAdminDashboard();
+ if(!skipHistory) history.pushState({page:name},'','/app?page='+name);
 }
+window.addEventListener('popstate',function(e){
+ if(e.state&&e.state.page) showPage(e.state.page,null,true);
+ else showPage('facilities',null,true);
+});
 function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
 document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal()});
 

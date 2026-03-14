@@ -44,7 +44,7 @@ def all_bookings():
             except KeyError:
                 return jsonify({'error': 'Invalid status'}), 400
 
-        bookings = query.order_by(Booking.start_time.desc()).all()
+        bookings = query.order_by(Booking.created_at.desc()).all()
 
         result = []
         for b in bookings:
@@ -58,6 +58,7 @@ def all_bookings():
                 'facility_id':   b.facility_id,
                 'facility_name': facility.name    if facility else 'Unknown',
                 'start_time':    b.start_time.strftime('%Y-%m-%d %H:%M'),
+                'created_at':    b.created_at.strftime('%Y-%m-%d %H:%M') if b.created_at else '',
                 'end_time':      b.end_time.strftime('%H:%M'),
                 'status':        b.status.value,
                 'purpose':       b.purpose or '',
