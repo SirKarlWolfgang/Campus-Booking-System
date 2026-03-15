@@ -86,8 +86,8 @@ def approve_booking(booking_id):
             send_booking_status(user.email, user.username, facility.name,
                 booking.start_time.strftime('%Y-%m-%d %H:%M'), 'approved', booking.booking_id,
                 booking.end_time.strftime('%H:%M'))
-        except Exception:
-            pass
+        except Exception as e:
+            print('Mail error:', e)
         return jsonify({'message': 'Booking approved'}), 200
 
 

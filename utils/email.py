@@ -1,6 +1,6 @@
 from flask_mail import Message
 from app import mail
-from utils.qr import generate_qr
+from utils.qr import generate_qr_base64
 
 def send_booking_confirmation(to_email, user_name, facility_name, start_time, end_time, booking_id):
     msg = Message(subject="BookSpace - Booking Received", recipients=[to_email])
@@ -32,10 +32,15 @@ def send_booking_status(to_email, user_name, facility_name, start_time, status, 
     label   = "Approved" if status == "approved" else "Rejected"
     message = "Your booking has been approved. Please arrive on time." if status == "approved" \
               else "Unfortunately your booking has been rejected. You may submit a new request."
+    qr_section = ""
+    if status == "approved":
+        qr_base64 = generate_qr_base64(booking_id, user_name, facility_name, start_time, end_time)
+        qr_section = f"""
+        <div style="text-align:center;margin-top:20px;padding:20px;border-top:1px solid #ddd9d0">
+          <p style="font-size:12px;color:#8a8680;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">Present this QR code at the venue entrance</p>
+          <img src="data:image/png;base64,{qr_base64}" width="160" height="160" alt="Booking QR Code"/>
+        </div>"""
     msg = Message(subject=f"BookSpace - Booking {label}", recipients=[to_email])
-    if status == 'approved':
-        qr_bytes = generate_qr(booking_id, user_name, facility_name, start_time, end_time)
-        msg.attach('booking_qr.png', 'image/png', qr_bytes)
     msg.html = f"""
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a18">
       <div style="background:#1a3a6b;padding:24px 32px">
@@ -53,6 +58,7 @@ def send_booking_status(to_email, user_name, facility_name, start_time, status, 
           <p><span style="color:#8a8680">Date:</span> <strong>{start_time.split(' ')[0]}</strong></p>
           <p><span style="color:#8a8680">Booking ID:</span> <strong>#{booking_id}</strong></p>
         </div>
+        {qr_section}
       </div>
       <div style="padding:16px 32px;background:#f5f2ec;border:1px solid #ddd9d0;border-top:none;font-size:11px;color:#8a8680">
         BookSpace - Campus Facility Booking System | DUT
