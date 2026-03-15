@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify, session
 from sqlalchemy.orm import Session
 from database import engine
-from models.models import Facility, Booking, BookingStatus
+from models.models import Facility, Booking, BookingStatus, User
 from datetime import datetime
+from utils.email import send_booking_confirmation
 
 booking_bp = Blueprint('booking', __name__)
 
@@ -104,6 +105,16 @@ def create_booking():
             db.add(booking)
             db.commit()
             db.refresh(booking)
+            user = db.query(User).filter_by(user_id=user_id).first()
+            try:
+                send_booking_confirmation(
+                    user.email, user.username, facility.name,
+                    booking.start_time.strftime('%Y-%m-%d %H:%M'),
+                    booking.end_time.strftime('%H:%M'),
+                    booking.booking_id
+                )
+            except Exception as e:
+                print('Mail error:', e)
         except ValueError as e:
             return jsonify({'error': str(e)}), 409
 

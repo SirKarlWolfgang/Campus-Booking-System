@@ -1,3 +1,4 @@
+from utils.email import send_booking_status
 from flask import Blueprint, request, jsonify, session
 from sqlalchemy.orm import Session
 from database import engine
@@ -79,6 +80,14 @@ def approve_booking(booking_id):
         booking.status      = BookingStatus.approved
         booking.approved_by = session.get('user_id')
         db.commit()
+        user     = db.query(User).filter_by(user_id=booking.user_id).first()
+        facility = db.query(Facility).filter_by(facility_id=booking.facility_id).first()
+        try:
+            send_booking_status(user.email, user.username, facility.name,
+                booking.start_time.strftime('%Y-%m-%d %H:%M'), 'approved', booking.booking_id,
+                booking.end_time.strftime('%H:%M'))
+        except Exception:
+            pass
         return jsonify({'message': 'Booking approved'}), 200
 
 
@@ -93,6 +102,13 @@ def reject_booking(booking_id):
             return jsonify({'error': 'Booking not found'}), 404
         booking.status = BookingStatus.rejected
         db.commit()
+        user     = db.query(User).filter_by(user_id=booking.user_id).first()
+        facility = db.query(Facility).filter_by(facility_id=booking.facility_id).first()
+        try:
+            send_booking_status(user.email, user.username, facility.name,
+                booking.start_time.strftime('%Y-%m-%d %H:%M'), 'rejected', booking.booking_id)
+        except Exception:
+            pass
         return jsonify({'message': 'Booking rejected'}), 200
 
 
