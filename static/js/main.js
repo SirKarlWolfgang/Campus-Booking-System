@@ -486,6 +486,12 @@ function fmtDate(dtStr){
   const d = new Date(dtStr.replace(' ','T'));
   return String(d.getDate()).padStart(2,'0')+'-'+months[d.getMonth()]+'-'+d.getFullYear()+' '+dtStr.split(' ')[1];
 }
+function calcDuration(start, end){
+  const s = new Date(start.replace(' ','T'));
+  const e = new Date(end.length === 5 ? start.split(' ')[0]+'T'+end : end.replace(' ','T'));
+  const hrs = Math.round((e - s) / 3600000);
+  return hrs === 1 ? '1 hour' : hrs + ' hours';
+}
 function renderAdminBookings(){
   var url = _adminBookingFilter === 'all'
     ? '/api/admin/bookings'
@@ -518,7 +524,7 @@ function renderAdminBookings(){
         '<td><span class="tbl-name">'+b.facility_name+'</span></td>'+
         '<td><div class="tbl-name">'+b.user_name+'</div><div class="tbl-sub">'+b.user_email+'</div></td>'+
         '<td><div>'+b.start_time+'</div></td>'+
-        '<td>'+b.end_time+'</td>'+
+        '<td>'+calcDuration(b.start_time, b.end_time)+'</td>'+
         '<td><span class="status-badge '+b.status+'">'+b.status+'</span></td>'+
         '<td>'+actions+'</td>'+
       '</tr>';
