@@ -44,6 +44,7 @@ class Facility(Base):
     type = Column("Type", String(50))
     capacity = Column("Capacity", Integer)
     description = Column("Description", Text)
+    image_url    = Column("ImageUrl", String(500), nullable=True)
     is_active = Column("IsActive", Boolean, default=True)
 
     bookings = relationship("Booking", back_populates="facility", cascade="all, delete-orphan")

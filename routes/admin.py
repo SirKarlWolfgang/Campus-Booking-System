@@ -155,6 +155,7 @@ def list_all_facilities():
             'capacity':    f.capacity,
             'description': f.description,
             'is_active':   f.is_active,
+            'image_url':   f.image_url or '',
         } for f in facilities]), 200
 
 
@@ -169,6 +170,7 @@ def add_facility():
     ftype       = data.get('type', '').strip()
     capacity    = data.get('capacity', 0)
     description = data.get('description', '').strip()
+    image_url   = data.get('image_url', '').strip()
     is_active   = data.get('is_active', True)
 
     if not name:
@@ -176,7 +178,7 @@ def add_facility():
 
     with Session(engine) as db:
         facility = Facility(name=name, type=ftype, capacity=capacity,
-                            description=description, is_active=is_active)
+                            description=description, is_active=is_active, image_url=image_url)
         db.add(facility)
         db.commit()
         db.refresh(facility)
@@ -200,6 +202,7 @@ def update_facility(facility_id):
         if 'capacity'    in data: facility.capacity    = data['capacity']
         if 'description' in data: facility.description = data['description']
         if 'is_active'   in data: facility.is_active   = data['is_active']
+        if 'image_url'   in data: facility.image_url   = data['image_url']
 
         db.commit()
         return jsonify({'message': 'Facility updated'}), 200

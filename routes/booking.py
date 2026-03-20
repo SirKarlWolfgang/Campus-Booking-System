@@ -24,6 +24,7 @@ def get_facilities():
             'type':        f.type,
             'capacity':    f.capacity,
             'description': f.description,
+            'image_url':   f.image_url or '',
         } for f in facilities]), 200
 
 
@@ -39,7 +40,9 @@ def get_facility(facility_id):
             'type':        f.type,
             'capacity':    f.capacity,
             'description': f.description,
+            'image_url':   f.image_url or '',
             'is_active':   f.is_active,
+            'image_url':   f.image_url or '',
         }), 200
 
 

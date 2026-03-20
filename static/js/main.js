@@ -171,12 +171,52 @@ function prefillForm(){
 }
 
 /* Facilities */
+let _allFacilities = [];
+let _facilityTypeFilter = 'all';
+
+function setFacilityFilter(type, btn){
+  _facilityTypeFilter = type;
+  document.querySelectorAll('#page-facilities .filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterFacilities();
+}
+
+function filterFacilities(){
+  const q = (document.getElementById('facilitySearch').value || '').toLowerCase();
+  const filtered = _allFacilities.filter(f => {
+    const matchType = _facilityTypeFilter === 'all' || (f.type||'').toLowerCase() === _facilityTypeFilter;
+    const matchSearch = f.name.toLowerCase().includes(q) || (f.type||'').toLowerCase().includes(q) || (f.description||'').toLowerCase().includes(q);
+    return matchType && matchSearch;
+  });
+  renderFacilityCards(filtered);
+}
+
+function renderFacilityCards(facilities){
+  document.getElementById('facilitiesGrid').innerHTML = facilities.length ? facilities.map(f => `
+      <div class="facility-card" onclick="selectFacility('${f.id}')">
+        ${f.image_url ? `<div class="facility-card__img"><img src="${f.image_url}" alt="${f.name}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-bottom:1px solid var(--border)"/></div>` : ''}
+        <div class="facility-card__body">
+          <div class="facility-card__name">${f.name}</div>
+          <div class="facility-card__meta">
+            <span class="meta-tag">Cap: ${f.capacity}</span>
+            <span class="meta-tag">${f.type || ''}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">${f.description||''}</div>
+          <button class="facility-card__btn">Reserve Now →</button>
+        </div>
+      </div>`).join('') : '<p style="color:var(--muted);padding:20px">No facilities found.</p>';
+  document.querySelector('#page-facilities .stats-strip .stat-box .stat-val').textContent = facilities.length;
+}
+
 function renderFacilities(){
   fetch('/api/facilities')
   .then(r => r.json())
   .then(facilities => {
+    _allFacilities = facilities;
+    filterFacilities();
     document.getElementById('facilitiesGrid').innerHTML = facilities.map(f => `
       <div class="facility-card" onclick="selectFacility('${f.id}')">
+        ${f.image_url ? `<div class="facility-card__img"><img src="${f.image_url}" alt="${f.name}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-bottom:1px solid var(--border)"/></div>` : ''}
         <div class="facility-card__body">
           <div class="facility-card__name">${f.name}</div>
           <div class="facility-card__meta">
@@ -792,6 +832,7 @@ function editFacility(id){
     document.getElementById('cf-capacity').value                = f.capacity;
     document.getElementById('cf-description').value             = f.description || '';
     document.getElementById('cf-active').checked                = f.is_active;
+    document.getElementById('cf-image-url').value               = f.image_url || '';
     document.getElementById('facilityFormTitle').textContent    = 'Edit Facility';
     document.getElementById('facilitySubmitBtn').textContent    = 'Save Changes';
     document.getElementById('facilityCloseBtn').style.display   = '';
@@ -804,6 +845,7 @@ function submitFacilityForm(){
   var capacity    = parseInt(document.getElementById('cf-capacity').value);
   var description = document.getElementById('cf-description').value.trim();
   var is_active   = document.getElementById('cf-active').checked;
+  var image_url   = document.getElementById('cf-image-url').value.trim();
 
   if(!name || !type || !capacity){
     alert('Name, type, and capacity are required.');
@@ -817,7 +859,7 @@ function submitFacilityForm(){
   fetch(url, {
     method: method,
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({name, type, capacity, description, is_active})
+    body: JSON.stringify({name, type, capacity, description, is_active, image_url})
   })
   .then(r => r.json())
   .then(function(data){
@@ -850,6 +892,7 @@ function resetFacilityForm(){
   document.getElementById('cf-capacity').value              = '';
   document.getElementById('cf-description').value           = '';
   document.getElementById('cf-active').checked              = true;
+  document.getElementById('cf-image-url').value             = '';
   document.getElementById('facilityFormTitle').textContent  = 'Add Facility';
   document.getElementById('facilitySubmitBtn').textContent  = 'Add Facility';
   document.getElementById('facilityCloseBtn').style.display = 'none';
