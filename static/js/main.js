@@ -1009,9 +1009,9 @@ function renderCalendarGrid(daysInMonth){
     const dateStr = _calYear + '-' + String(_calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
     const count = _calBookedDates[dateStr] || 0;
     const isToday = dateStr === today;
-    let bg = 'var(--surface2)'; let border = 'var(--border)'; let color = 'var(--text)';
-    if(count >= 3){ bg = 'rgba(155,35,53,.2)'; border = 'rgba(155,35,53,.4)'; }
-    else if(count > 0){ bg = 'rgba(139,105,20,.2)'; border = 'rgba(139,105,20,.4)'; }
+    let bg = 'rgba(45,106,79,.15)'; let border = 'rgba(45,106,79,.5)'; let color = 'var(--text)';
+    if(count >= 3){ bg = 'rgba(155,35,53,.25)'; border = 'rgba(155,35,53,.7)'; }
+    else if(count > 0){ bg = 'rgba(139,105,20,.25)'; border = 'rgba(139,105,20,.7)'; }
     const todayStyle = isToday ? 'font-weight:600;' : '';
     html += `<div onclick="showDayTimeGrid('${dateStr}')" style="padding:6px 2px;border:1px solid ${border};background:${bg};font-size:13px;${todayStyle}color:${color};border-radius:1px;cursor:pointer;transition:opacity .15s" title="Click to see time slots">${d}</div>`;
   }

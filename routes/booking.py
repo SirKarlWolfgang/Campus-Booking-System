@@ -73,7 +73,20 @@ def search_facilities():
         start_time = datetime.combine(date, dt.time.min)
         end_time   = datetime.combine(date, dt.time.max)
     with Session(engine) as db:
-        facilities = db.query(Facility).filter_by(is_active=True).filter(Facility.capacity >= capacity).all()
+        user = db.query(User).filter_by(user_id=user_id).first()
+        user_role = user.role.value
+        all_facilities = db.query(Facility).filter_by(is_active=True).filter(Facility.capacity >= capacity).all()
+        if user_role == 'admin':
+            facilities = all_facilities
+        else:
+            facilities = []
+            for f in all_facilities:
+                if not f.allowed_roles:
+                    facilities.append(f)
+                    continue
+                allowed = [r.strip() for r in f.allowed_roles.split(',')]
+                if user_role in allowed:
+                    facilities.append(f)
         booked_ids = set()
         for f in facilities:
             conflict = db.query(Booking).filter(
