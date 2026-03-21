@@ -9,8 +9,9 @@ Base = declarative_base()
 # ----- Enums for role and status -----
 class UserRole(enum.Enum):
     student = "student"
-    staff = "staff"          # renamed from 'lecturer' to match proposal
-    admin = "admin"
+    staff   = "staff"
+    admin   = "admin"
+    guest   = "guest"
 
 class BookingStatus(enum.Enum):
     pending = "pending"
@@ -44,8 +45,9 @@ class Facility(Base):
     type = Column("Type", String(50))
     capacity = Column("Capacity", Integer)
     description = Column("Description", Text)
-    image_url    = Column("ImageUrl", String(500), nullable=True)
-    is_active = Column("IsActive", Boolean, default=True)
+    image_url     = Column("ImageUrl", String(500), nullable=True)
+    allowed_roles = Column("AllowedRoles", String(100), nullable=True)
+    is_active     = Column("IsActive", Boolean, default=True)
 
     bookings = relationship("Booking", back_populates="facility", cascade="all, delete-orphan")
 

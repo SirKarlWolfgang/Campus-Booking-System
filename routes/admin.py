@@ -165,6 +165,7 @@ def list_all_facilities():
             'description': f.description,
             'is_active':   f.is_active,
             'image_url':   f.image_url or '',
+            'allowed_roles': f.allowed_roles or '',
         } for f in facilities]), 200
 
 
@@ -179,7 +180,8 @@ def add_facility():
     ftype       = data.get('type', '').strip()
     capacity    = data.get('capacity', 0)
     description = data.get('description', '').strip()
-    image_url   = data.get('image_url', '').strip()
+    image_url    = data.get('image_url', '').strip()
+    allowed_roles = data.get('allowed_roles', '').strip()
     is_active   = data.get('is_active', True)
 
     if not name:
@@ -187,7 +189,7 @@ def add_facility():
 
     with Session(engine) as db:
         facility = Facility(name=name, type=ftype, capacity=capacity,
-                            description=description, is_active=is_active, image_url=image_url)
+                            description=description, is_active=is_active, image_url=image_url, allowed_roles=allowed_roles)
         db.add(facility)
         db.commit()
         db.refresh(facility)
@@ -211,7 +213,8 @@ def update_facility(facility_id):
         if 'capacity'    in data: facility.capacity    = data['capacity']
         if 'description' in data: facility.description = data['description']
         if 'is_active'   in data: facility.is_active   = data['is_active']
-        if 'image_url'   in data: facility.image_url   = data['image_url']
+        if 'image_url'    in data: facility.image_url    = data['image_url']
+        if 'allowed_roles' in data: facility.allowed_roles = data['allowed_roles']
 
         db.commit()
         return jsonify({'message': 'Facility updated'}), 200
@@ -259,7 +262,8 @@ def create_user():
         if db.query(User).filter_by(email=data['email']).first():
             return jsonify({'error': 'Email already registered.'}), 400
         hashed = bcrypt.hashpw(data['password'].encode(), bcrypt.gensalt()).decode()
-        role   = UserRole.admin if data.get('role') == 'admin' else UserRole.student
+        role_map = {'student': UserRole.student, 'staff': UserRole.staff, 'guest': UserRole.guest, 'admin': UserRole.admin}
+        role = role_map.get(data.get('role'), UserRole.student)
         user   = User(username=data['username'], email=data['email'],
                       password_hash=hashed, role=role)
         db.add(user)
@@ -280,8 +284,9 @@ def update_user(uid):
             return jsonify({'error': 'User not found.'}), 404
         if 'username' in data: user.username = data['username']
         if 'email'    in data: user.email    = data['email']
-        if 'role'     in data:
-            user.role = UserRole.admin if data['role'] == 'admin' else UserRole.student
+        if 'role' in data:
+            role_map = {'student': UserRole.student, 'staff': UserRole.staff, 'guest': UserRole.guest, 'admin': UserRole.admin}
+            user.role = role_map.get(data['role'], UserRole.student)
         if data.get('password'):
             user.password_hash = bcrypt.hashpw(
                 data['password'].encode(), bcrypt.gensalt()).decode()

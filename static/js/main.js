@@ -675,7 +675,6 @@ function editUser(id){
     document.getElementById('cu-fname').value             = words[0] || '';
     document.getElementById('cu-lname').value             = words.slice(1).join(' ') || '';
     document.getElementById('cu-email').value             = u.email;
-    document.getElementById('cu-phone').value             = '';
     document.getElementById('cu-password').value          = '';
     document.getElementById('cu-password').placeholder    = 'Leave blank to keep current';
     document.getElementById('cu-role').value              = u.role;
@@ -743,7 +742,6 @@ function resetCrudForm(){
   document.getElementById('cu-fname').value             = '';
   document.getElementById('cu-lname').value             = '';
   document.getElementById('cu-email').value             = '';
-  document.getElementById('cu-phone').value             = '';
   document.getElementById('cu-password').value          = '';
   document.getElementById('cu-password').placeholder    = 'Min. 6 characters';
   document.getElementById('cu-role').value              = 'user';
@@ -833,6 +831,7 @@ function editFacility(id){
     document.getElementById('cf-description').value             = f.description || '';
     document.getElementById('cf-active').checked                = f.is_active;
     document.getElementById('cf-image-url').value               = f.image_url || '';
+    document.getElementById('cf-allowed-roles').value           = f.allowed_roles || '';
     document.getElementById('facilityFormTitle').textContent    = 'Edit Facility';
     document.getElementById('facilitySubmitBtn').textContent    = 'Save Changes';
     document.getElementById('facilityCloseBtn').style.display   = '';
@@ -845,7 +844,8 @@ function submitFacilityForm(){
   var capacity    = parseInt(document.getElementById('cf-capacity').value);
   var description = document.getElementById('cf-description').value.trim();
   var is_active   = document.getElementById('cf-active').checked;
-  var image_url   = document.getElementById('cf-image-url').value.trim();
+  var image_url    = document.getElementById('cf-image-url').value.trim();
+  var allowed_roles = document.getElementById('cf-allowed-roles').value.trim();
 
   if(!name || !type || !capacity){
     alert('Name, type, and capacity are required.');
@@ -859,7 +859,7 @@ function submitFacilityForm(){
   fetch(url, {
     method: method,
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({name, type, capacity, description, is_active, image_url})
+    body: JSON.stringify({name, type, capacity, description, is_active, image_url, allowed_roles})
   })
   .then(r => r.json())
   .then(function(data){
@@ -893,6 +893,7 @@ function resetFacilityForm(){
   document.getElementById('cf-description').value           = '';
   document.getElementById('cf-active').checked              = true;
   document.getElementById('cf-image-url').value             = '';
+  document.getElementById('cf-allowed-roles').value         = '';
   document.getElementById('facilityFormTitle').textContent  = 'Add Facility';
   document.getElementById('facilitySubmitBtn').textContent  = 'Add Facility';
   document.getElementById('facilityCloseBtn').style.display = 'none';

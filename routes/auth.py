@@ -24,7 +24,14 @@ def register():
             return jsonify({'error': 'Email already registered'}), 409
 
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-        user = User(username=name, email=email, password_hash=hashed, role=UserRole.student)
+        domain = email.split('@')[-1].lower()
+        if domain == 'dut4life.ac.za':
+            role = UserRole.student
+        elif domain in ('dut.ac.za', 'yahoo.com'):
+            role = UserRole.staff
+        else:
+            role = UserRole.guest
+        user = User(username=name, email=email, password_hash=hashed, role=role)
         db.add(user)
         db.commit()
         db.refresh(user)

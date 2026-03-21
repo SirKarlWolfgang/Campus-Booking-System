@@ -64,10 +64,6 @@
  <div class="ferr" id="r-err-email">Valid email required.</div>
  </div>
  <div class="fg">
- <label>Phone (optional)</label>
- <input type="tel" id="r-phone" placeholder="+27 123 456 789"/>
- </div>
- <div class="fg">
  <label>Password</label>
  <input type="password" id="r-password" placeholder="Min. 6 characters"/>
  <button class="pw-toggle" type="button" onclick="togglePw('r-password',this)">Show</button>
@@ -79,6 +75,7 @@
  <button class="pw-toggle" type="button" onclick="togglePw('r-confirm',this)">Show</button>
  <div class="ferr" id="r-err-confirm">Passwords don't match.</div>
  </div>
+ <p style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">By registering, you agree that your personal information will be used solely for facility booking purposes in accordance with the <strong>Protection of Personal Information Act (POPIA)</strong>.</p>
  <button class="auth-submit" onclick="doRegister()">Create Account →</button>
  </div>
  </div>
@@ -317,10 +314,6 @@
             <div class="field-err" id="cu-err-email">Valid email required.</div>
           </div>
           <div class="form-group">
-            <label>Phone</label>
-            <input type="tel" id="cu-phone" placeholder="+27 12 345 6789"/>
-          </div>
-          <div class="form-group">
             <label>Password <span id="cu-pw-hint" class="pw-hint"></span></label>
             <input type="password" id="cu-password" placeholder="Min. 6 characters"/>
             <div class="field-err" id="cu-err-password">Min. 6 characters required.</div>
@@ -328,7 +321,9 @@
           <div class="form-group">
             <label>Role</label>
             <select id="cu-role" title="Select user role">
-              <option value="user">User</option>
+              <option value="student">Student</option>
+              <option value="staff">Staff</option>
+              <option value="guest">Guest</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -349,7 +344,7 @@
       </div>
       <table class="admin-table">
         <thead><tr>
-          <th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th><th>Actions</th>
+          <th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th>
         </tr></thead>
         <tbody id="usersTableBody"></tbody>
       </table>
@@ -382,6 +377,10 @@
           <div class="form-group">
             <label>Image URL</label>
             <input type="text" id="cf-image-url" placeholder="https://example.com/image.jpg"/>
+          </div>
+          <div class="form-group">
+            <label>Allowed Roles <span style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0">(comma-separated: student, staff, guest, admin)</span></label>
+            <input type="text" id="cf-allowed-roles" placeholder="e.g. student, staff"/>
           </div>
           <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px">
             <input type="checkbox" id="cf-active" checked style="width:16px;height:16px;accent-color:var(--accent)"/>

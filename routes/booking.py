@@ -16,8 +16,26 @@ def require_login():
 
 @booking_bp.route('/api/facilities', methods=['GET'])
 def get_facilities():
+    user_id = require_login()
+    if not user_id:
+        return jsonify({'error': 'Login required'}), 401
     with Session(engine) as db:
+        user = db.query(User).filter_by(user_id=user_id).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        user_role = user.role.value
         facilities = db.query(Facility).filter_by(is_active=True).all()
+        if user_role == 'admin':
+            filtered = facilities
+        else:
+            filtered = []
+            for f in facilities:
+                if not f.allowed_roles:
+                    filtered.append(f)
+                    continue
+                allowed = [r.strip() for r in f.allowed_roles.split(',')]
+                if user_role in allowed:
+                    filtered.append(f)
         return jsonify([{
             'id':          f.facility_id,
             'name':        f.name,
@@ -25,7 +43,7 @@ def get_facilities():
             'capacity':    f.capacity,
             'description': f.description,
             'image_url':   f.image_url or '',
-        } for f in facilities]), 200
+        } for f in filtered]), 200
 
 
 
@@ -144,6 +162,12 @@ def create_booking():
         facility = db.query(Facility).filter_by(facility_id=facility_id, is_active=True).first()
         if not facility:
             return jsonify({'error': 'Facility not found or unavailable'}), 404
+
+        user = db.query(User).filter_by(user_id=user_id).first()
+        if facility.allowed_roles:
+            allowed = [r.strip() for r in facility.allowed_roles.split(',')]
+            if user.role.value not in allowed and user.role.value != 'admin':
+                return jsonify({'error': 'You are not allowed to book this facility'}), 403
 
         try:
             booking = Booking(
