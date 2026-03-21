@@ -78,6 +78,15 @@ def approve_booking(booking_id):
         booking = db.query(Booking).filter_by(booking_id=booking_id).first()
         if not booking:
             return jsonify({'error': 'Booking not found'}), 404
+        conflict = db.query(Booking).filter(
+            Booking.facility_id == booking.facility_id,
+            Booking.booking_id  != booking.booking_id,
+            Booking.status      == BookingStatus.approved,
+            Booking.start_time  < booking.end_time,
+            Booking.end_time    > booking.start_time,
+        ).first()
+        if conflict:
+            return jsonify({'error': 'Conflict: another approved booking exists for this time slot.'}), 409
         booking.status      = BookingStatus.approved
         booking.approved_by = session.get('user_id')
         db.commit()

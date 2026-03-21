@@ -194,7 +194,7 @@ function filterFacilities(){
 function renderFacilityCards(facilities){
   document.getElementById('facilitiesGrid').innerHTML = facilities.length ? facilities.map(f => `
       <div class="facility-card" onclick="selectFacility('${f.id}')">
-        ${f.image_url ? `<div class="facility-card__img"><img src="${f.image_url}" alt="${f.name}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-bottom:1px solid var(--border)"/></div>` : ''}
+        ${f.image_url ? `<img src="${f.image_url}" alt="${f.name}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;margin:-28px -28px 16px -28px;width:calc(100% + 56px);border-bottom:1px solid var(--border)"/>` : ''}
         <div class="facility-card__body">
           <div class="facility-card__name">${f.name}</div>
           <div class="facility-card__meta">
@@ -202,7 +202,7 @@ function renderFacilityCards(facilities){
             <span class="meta-tag">${f.type || ''}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">${f.description||''}</div>
-          <button class="facility-card__btn">Reserve Now →</button>
+          <div style='display:flex;gap:8px;margin-top:auto'><button class="facility-card__btn" onclick="event.stopPropagation();selectFacility('${f.id}')">Reserve →</button><button class="facility-card__btn" style="background:var(--surface2);color:var(--accent);border:1px solid var(--border)" onclick="event.stopPropagation();openCalendar(${f.id},'${f.name}')">Availability</button></div>
         </div>
       </div>`).join('') : '<p style="color:var(--muted);padding:20px">No facilities found.</p>';
   document.querySelector('#page-facilities .stats-strip .stat-box .stat-val').textContent = facilities.length;
@@ -216,7 +216,7 @@ function renderFacilities(){
     filterFacilities();
     document.getElementById('facilitiesGrid').innerHTML = facilities.map(f => `
       <div class="facility-card" onclick="selectFacility('${f.id}')">
-        ${f.image_url ? `<div class="facility-card__img"><img src="${f.image_url}" alt="${f.name}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-bottom:1px solid var(--border)"/></div>` : ''}
+        ${f.image_url ? `<img src="${f.image_url}" alt="${f.name}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;margin:-28px -28px 16px -28px;width:calc(100% + 56px);border-bottom:1px solid var(--border)"/>` : ''}
         <div class="facility-card__body">
           <div class="facility-card__name">${f.name}</div>
           <div class="facility-card__meta">
@@ -224,7 +224,7 @@ function renderFacilities(){
             <span class="meta-tag">${f.type || ''}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">${f.description||''}</div>
-          <button class="facility-card__btn">Reserve Now →</button>
+          <div style='display:flex;gap:8px;margin-top:auto'><button class="facility-card__btn" onclick="event.stopPropagation();selectFacility('${f.id}')">Reserve →</button><button class="facility-card__btn" style="background:var(--surface2);color:var(--accent);border:1px solid var(--border)" onclick="event.stopPropagation();openCalendar(${f.id},'${f.name}')">Availability</button></div>
         </div>
       </div>`).join('');
 
@@ -949,3 +949,163 @@ document.getElementById('deleteModal').addEventListener('click',function(e){if(e
 
 
 const _fresh=new URLSearchParams(window.location.search).get('fresh');if(_fresh){fetch('/api/logout',{method:'POST'}).finally(()=>{});} else {fetch('/api/me').then(r=>r.json()).then(data=>{if(data.user) launchApp(data.user);}).catch(()=>{});}
+
+/* ── Availability Calendar ── */
+let _calFacilityId = null;
+let _calYear = null;
+let _calMonth = null;
+let _calBookedDates = {};
+
+function openCalendar(id, name){
+  _calFacilityId = id;
+  const now = new Date();
+  _calYear  = now.getFullYear();
+  _calMonth = now.getMonth();
+  document.getElementById('calendarFacilityName').textContent = name;
+  document.getElementById('calendarModal').classList.add('show');
+  loadCalendarMonth();
+}
+
+function closeCalendarModal(){
+  document.getElementById('calendarModal').classList.remove('show');
+}
+
+function changeCalendarMonth(dir){
+  _calMonth += dir;
+  if(_calMonth > 11){ _calMonth = 0; _calYear++; }
+  if(_calMonth < 0) { _calMonth = 11; _calYear--; }
+  loadCalendarMonth();
+}
+
+function loadCalendarMonth(){
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calendarMonthLabel').textContent = months[_calMonth] + ' ' + _calYear;
+  const daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
+  const promises = [];
+  for(let d = 1; d <= daysInMonth; d++){
+    const dateStr = _calYear + '-' + String(_calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    promises.push(
+      fetch('/api/facilities/' + _calFacilityId + '/availability?date=' + dateStr)
+      .then(r => r.json())
+      .then(data => ({ date: dateStr, slots: data.booked_slots || [] }))
+    );
+  }
+  Promise.all(promises).then(results => {
+    _calBookedDates = {};
+    results.forEach(r => { _calBookedDates[r.date] = r.slots.length; });
+    renderCalendarGrid(daysInMonth);
+  });
+}
+
+function renderCalendarGrid(daysInMonth){
+  const firstDay = new Date(_calYear, _calMonth, 1).getDay();
+  const today = new Date().toISOString().split('T')[0];
+  const grid = document.getElementById('calendarGrid');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = days.map(d => `<div style="font-size:10px;color:var(--muted);letter-spacing:1px;padding:4px 0">${d}</div>`).join('');
+  for(let i = 0; i < firstDay; i++) html += '<div></div>';
+  for(let d = 1; d <= daysInMonth; d++){
+    const dateStr = _calYear + '-' + String(_calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const count = _calBookedDates[dateStr] || 0;
+    const isToday = dateStr === today;
+    let bg = 'var(--surface2)'; let border = 'var(--border)'; let color = 'var(--text)';
+    if(count >= 3){ bg = 'rgba(155,35,53,.2)'; border = 'rgba(155,35,53,.4)'; }
+    else if(count > 0){ bg = 'rgba(139,105,20,.2)'; border = 'rgba(139,105,20,.4)'; }
+    const todayStyle = isToday ? 'font-weight:600;' : '';
+    html += `<div onclick="showDayTimeGrid('${dateStr}')" style="padding:6px 2px;border:1px solid ${border};background:${bg};font-size:13px;${todayStyle}color:${color};border-radius:1px;cursor:pointer;transition:opacity .15s" title="Click to see time slots">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function updateSmartTo(){
+  const slots = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+  const from  = document.getElementById('smartFrom').value;
+  const toSel = document.getElementById('smartTo');
+  toSel.innerHTML = '<option value="">Any</option>';
+  if(!from){ return; }
+  const fromIdx = slots.indexOf(from);
+  const maxHours = from === '19:00' ? 3 : 4;
+  for(let i = 1; i <= maxHours; i++){
+    const idx = fromIdx + i;
+    if(idx < slots.length){
+      const opt = document.createElement('option');
+      opt.value = slots[idx];
+      opt.textContent = slots[idx] + ' (' + i + ' hr' + (i>1?'s':'') + ')';
+      toSel.appendChild(opt);
+    }
+  }
+  toSel.selectedIndex = 1;
+}
+
+/* ── Smart Search ── */
+function smartSearch(){
+  const date     = document.getElementById('smartDate').value;
+  const capacity = document.getElementById('smartCapacity').value || 1;
+  const status   = document.getElementById('smartSearchStatus');
+  if(!date){ status.style.display='block'; status.textContent='Please select a date.'; return; }
+  status.style.display = 'block';
+  status.textContent   = 'Searching...';
+  const fromTime = document.getElementById('smartFrom').value;
+  const toTime   = document.getElementById('smartTo').value;
+  let url = '/api/facilities/search?date='+date+'&capacity='+capacity;
+  if(fromTime && toTime) url += '&from='+fromTime+'&to='+toTime;
+  fetch(url)
+  .then(r => r.json())
+  .then(function(facilities){
+    if(facilities.error){ status.textContent = facilities.error; return; }
+    _allFacilities = facilities;
+    _facilityTypeFilter = 'all';
+    document.querySelectorAll('#page-facilities .filter-tab').forEach(b => b.classList.remove('active'));
+    document.querySelector('#page-facilities .filter-tab').classList.add('active');
+    document.getElementById('facilitySearch').value = '';
+    filterFacilities();
+    document.getElementById('smartClearBtn').style.display = '';
+    status.textContent = facilities.length + ' facilit' + (facilities.length===1?'y':'ies') + ' available on ' + date + ' for ' + capacity + ' attendee(s).';
+  })
+  .catch(function(){ status.textContent = 'Search failed. Try again.'; });
+}
+
+function clearSmartSearch(){
+  document.getElementById('smartSearchStatus').style.display = 'none';
+  document.getElementById('smartClearBtn').style.display     = 'none';
+  document.getElementById('smartDate').value                 = '';
+  document.getElementById('smartCapacity').value             = '1';
+  renderFacilities();
+}
+
+/* ── Calendar Time Grid ── */
+function showDayTimeGrid(dateStr){
+  const slots = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+  const grid  = document.getElementById('calendarGrid');
+
+  fetch('/api/facilities/'+_calFacilityId+'/availability?date='+dateStr)
+  .then(r => r.json())
+  .then(function(data){
+    const booked = data.booked_slots || [];
+
+    function isBooked(slot){
+      return booked.some(function(b){
+        return b.start_time <= slot && slot < b.end_time;
+      });
+    }
+
+    let html = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px">
+      <span style="font-family:var(--font-d);font-size:16px">${dateStr}</span>
+      <button onclick="renderCalendarGrid(new Date(_calYear,_calMonth+1,0).getDate())" style="background:none;border:1px solid var(--border);padding:4px 10px;font-size:11px;cursor:pointer;border-radius:1px;color:var(--muted)">← Back</button>
+    </div>`;
+
+    slots.forEach(function(slot){
+      const busy = isBooked(slot);
+      const bg    = busy ? 'rgba(155,35,53,.15)' : 'rgba(45,106,79,.1)';
+      const border = busy ? 'rgba(155,35,53,.4)' : 'rgba(45,106,79,.3)';
+      const color  = busy ? 'var(--red)' : 'var(--green)';
+      const label  = busy ? 'Booked' : 'Free';
+      html += `<div style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid ${border};background:${bg};border-radius:1px;margin-bottom:4px">
+        <span style="font-size:13px;font-weight:500">${slot}</span>
+        <span style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:${color}">${label}</span>
+      </div>`;
+    });
+
+    grid.innerHTML = html;
+  });
+}

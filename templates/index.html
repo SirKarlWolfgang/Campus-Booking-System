@@ -112,7 +112,7 @@
  <div class="page active" id="page-facilities">
  <div class="page-header">
  <h1>Our <span class="highlight">Facilities</span></h1>
- <p>Browse and reserve premium spaces for your next event</p>
+ <p>Browse and reserve spaces</p>
  </div>
  <div class="stats-strip">
  <div class="stat-box"><div class="stat-val">6</div><div class="stat-label">Total Facilities</div></div>
@@ -120,6 +120,39 @@
  <div class="stat-box"><div class="stat-val" id="stat-bookings">0</div><div class="stat-label">Your Bookings</div></div>
  
  </div>
+ <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);padding:24px 28px;margin-bottom:28px">
+  <div style="font-family:var(--font-d);font-size:20px;font-weight:400;margin-bottom:4px">Smart Search</div>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:20px;font-style:italic">Find available facilities for your date and group size</p>
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:nowrap;overflow-x:auto">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Date</label>
+      <input type="date" id="smartDate" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:var(--font-b);font-size:13px;border-radius:1px;outline:none"/>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">From</label>
+      <select id="smartFrom" onchange="updateSmartTo()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:var(--font-b);font-size:13px;border-radius:1px;outline:none">
+        <option value="">Any</option>
+        <option>08:00</option><option>09:00</option><option>10:00</option><option>11:00</option>
+        <option>12:00</option><option>13:00</option><option>14:00</option><option>15:00</option>
+        <option>16:00</option><option>17:00</option><option>18:00</option><option>19:00</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">To</label>
+      <select id="smartTo" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:var(--font-b);font-size:13px;border-radius:1px;outline:none">
+        <option value="">Any</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Attendees</label>
+      <input type="number" id="smartCapacity" min="1" value="1" placeholder="e.g. 20" style="width:90px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:var(--font-b);font-size:13px;border-radius:1px;outline:none"/>
+    </div>
+    <button onclick="smartSearch()" style="background:var(--accent);color:#fff;border:none;padding:9px 20px;font-family:var(--font-b);font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;border-radius:1px;cursor:pointer;align-self:flex-end">Search</button>
+    <button onclick="clearSmartSearch()" id="smartClearBtn" style="display:none;background:none;border:1px solid var(--border);color:var(--muted);padding:9px 16px;font-family:var(--font-b);font-size:11px;letter-spacing:1px;text-transform:uppercase;border-radius:1px;cursor:pointer;align-self:flex-end">Browse All</button>
+  </div>
+  <div id="smartSearchStatus" style="margin-top:12px;font-size:13px;color:var(--muted);display:none"></div>
+</div>
+
  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
    <input type="text" id="facilitySearch" placeholder="Search facilities..." oninput="filterFacilities()"
      style="flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;font-family:var(--font-b);font-size:13px;border-radius:1px;outline:none"/>
@@ -394,6 +427,27 @@
         <div id="checkinResult" style="margin-top:16px;display:none"></div>
       </div>
     </div>
+
+<!-- AVAILABILITY CALENDAR MODAL -->
+<div class="modal-overlay" id="calendarModal" onclick="if(event.target===this)closeCalendarModal()">
+  <div class="modal" style="width:500px;max-width:95vw;text-align:left">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 id="calendarFacilityName" style="font-size:20px"></h2>
+      <button onclick="closeCalendarModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">×</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <button onclick="changeCalendarMonth(-1)" style="background:none;border:1px solid var(--border);padding:6px 12px;cursor:pointer;border-radius:1px;color:var(--text)">←</button>
+      <span id="calendarMonthLabel" style="font-family:var(--font-d);font-size:18px"></span>
+      <button onclick="changeCalendarMonth(1)" style="background:none;border:1px solid var(--border);padding:6px 12px;cursor:pointer;border-radius:1px;color:var(--text)">→</button>
+    </div>
+    <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center"></div>
+    <div style="display:flex;gap:16px;margin-top:16px;font-size:12px;color:var(--muted)">
+      <span><span style="display:inline-block;width:12px;height:12px;background:var(--surface2);border:1px solid var(--border);margin-right:4px"></span>Available</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(155,35,53,.2);border:1px solid rgba(155,35,53,.4);margin-right:4px"></span>Booked</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(139,105,20,.2);border:1px solid rgba(139,105,20,.4);margin-right:4px"></span>Partial</span>
+    </div>
+  </div>
+</div>
 
 <!-- SUCCESS MODAL -->
 <div class="modal-overlay" id="modalOverlay">

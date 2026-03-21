@@ -116,7 +116,7 @@ def check_booking_overlap(mapper, connection, target):
         return
     overlapping = session.query(Booking).filter(
         Booking.facility_id == target.facility_id,
-        Booking.status.in_([BookingStatus.pending, BookingStatus.approved]),
+        Booking.status.in_([BookingStatus.approved, BookingStatus.checked_in]),
         Booking.start_time < target.end_time,
         Booking.end_time > target.start_time
     ).first()
