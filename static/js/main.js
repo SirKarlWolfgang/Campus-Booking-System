@@ -1110,3 +1110,125 @@ function showDayTimeGrid(dateStr){
     grid.innerHTML = html;
   });
 }
+
+/* ── AI Booking ── */
+let _aiBookingData = null;
+
+function parseAIBooking(){
+  const text   = document.getElementById('aiBookingInput').value.trim();
+  const status = document.getElementById('aiStatus');
+  if(!text){ status.style.display='block'; status.textContent='Please describe what you need.'; return; }
+  status.style.display = 'block';
+  status.textContent   = '✦ Finding the best match...';
+  fetch('/api/ai/parse-booking', {
+    credentials: 'include',
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({text})
+  })
+  .then(r => r.json())
+  .then(function(data){
+    if(data.error){ status.textContent = '✕ ' + data.error; return; }
+    status.style.display = 'none';
+    _aiBookingData = data;
+    showAIResult(data);
+  })
+  .catch(function(){ status.textContent = '✕ Server error. Try again.'; });
+}
+
+function showAIResult(data){
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d = new Date(data.date + 'T00:00:00');
+  const dateStr = String(d.getDate()).padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
+
+  let alts = '';
+  if(data.alternatives && data.alternatives.length){
+    alts = '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">' +
+      '<div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Other options</div>' +
+      data.alternatives.map(a =>
+        `<div onclick="selectAIAlternative(${a.facility_id},'${data.date}','${data.start_time}','${data.end_time}')"
+          style="padding:10px 14px;border:1px solid var(--border);border-radius:1px;margin-bottom:6px;cursor:pointer;font-size:13px;transition:border-color .15s"
+          onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <strong>${a.facility_name}</strong> <span style="color:var(--muted)">— capacity ${a.capacity}</span>
+        </div>`
+      ).join('') + '</div>';
+  }
+
+  document.getElementById('aiResultContent').innerHTML = `
+    ${data.image_url ? `<img src="${data.image_url}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:1px;margin-bottom:16px"/>` : ''}
+    <div style="font-family:var(--font-d);font-size:24px;font-weight:400;margin-bottom:4px">${data.facility_name}</div>
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:16px">${data.facility_type} &nbsp;·&nbsp; Capacity ${data.capacity}</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);padding:16px;border-radius:1px;font-size:13px">
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase">Date</span>
+        <span style="font-weight:500">${dateStr}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase">Time</span>
+        <span style="font-weight:500">${data.start_time} – ${data.end_time}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0">
+        <span style="color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase">Duration</span>
+        <span style="font-weight:500">${data.duration} hour${data.duration>1?'s':''}</span>
+      </div>
+    </div>
+    ${alts}`;
+
+  document.getElementById('aiResultModal').classList.add('show');
+}
+
+function confirmAIBooking(){
+  if(!_aiBookingData) return;
+  const d = _aiBookingData;
+  fetch('/api/bookings', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      facility_id: d.facility_id,
+      start_time:  d.date + 'T' + d.start_time,
+      end_time:    d.date + 'T' + d.end_time,
+      purpose:     'AI Booking: ' + d.parsed_text
+    })
+  })
+  .then(r => r.json())
+  .then(function(data){
+    if(data.error){ alert(data.error); return; }
+    closeAIModal();
+    document.getElementById('aiBookingInput').value = '';
+    showPage('mybookings', document.querySelectorAll('.nav-btn')[2]);
+    renderBookingList();
+  })
+  .catch(function(){ alert('Booking failed. Try again.'); });
+}
+
+function selectAIAlternative(facilityId, date, startTime, endTime){
+  _aiBookingData.facility_id = facilityId;
+  _aiBookingData.date = date;
+  _aiBookingData.start_time = startTime;
+  _aiBookingData.end_time = endTime;
+  fetch('/api/facilities/' + facilityId)
+  .then(r => r.json())
+  .then(function(f){
+    _aiBookingData.facility_name = f.name;
+    _aiBookingData.facility_type = f.type;
+    _aiBookingData.capacity = f.capacity;
+    _aiBookingData.image_url = f.image_url || '';
+    showAIResult(_aiBookingData);
+  });
+}
+
+function closeAIModal(){
+  document.getElementById('aiResultModal').classList.remove('show');
+  _aiBookingData = null;
+}
+
+function switchSearchTab(tab, btn){
+  document.getElementById('searchPanelSmart').style.display = tab==='smart' ? '' : 'none';
+  document.getElementById('searchPanelAI').style.display    = tab==='ai'    ? '' : 'none';
+  document.querySelectorAll('.search-tab-btn').forEach(b => {
+    b.style.borderBottomColor = 'transparent';
+    b.style.color = 'var(--muted)';
+  });
+  btn.style.borderBottomColor = tab==='ai' ? 'var(--gold)' : 'var(--accent)';
+  btn.style.color = tab==='ai' ? 'var(--gold)' : 'var(--accent)';
+}
