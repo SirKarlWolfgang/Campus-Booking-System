@@ -4,6 +4,7 @@ from database import engine
 from models.models import Facility, Booking, BookingStatus, User
 from datetime import datetime
 from utils.email import send_booking_confirmation
+import threading
 
 booking_bp = Blueprint('booking', __name__)
 
