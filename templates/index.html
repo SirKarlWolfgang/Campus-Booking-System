@@ -470,6 +470,21 @@
   </div>
 </div>
 
+<!-- AI RESULT MODAL -->
+<div class="modal-overlay" id="aiResultModal" onclick="if(event.target===this)closeAIModal()">
+  <div class="modal" style="width:500px;max-width:95vw;text-align:left">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:20px;font-family:var(--font-d);font-weight:400">Best Match Found</h2>
+      <button onclick="closeAIModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">×</button>
+    </div>
+    <div id="aiResultContent"></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="confirmAIBooking()" style="flex:1;background:var(--accent);color:#fff;border:none;padding:13px;font-family:var(--font-b);font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;border-radius:1px;cursor:pointer">Confirm Booking</button>
+      <button onclick="closeAIModal()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:13px 20px;font-family:var(--font-b);font-size:11px;letter-spacing:1px;text-transform:uppercase;border-radius:1px;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- SUCCESS MODAL -->
 <div class="modal-overlay" id="modalOverlay">
  <div class="modal">
