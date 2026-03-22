@@ -1,12 +1,10 @@
 import os
-from mailjet_rest import Client
+import resend
 from utils.qr import generate_qr_base64
 
-def get_client():
-    return Client(auth=(os.getenv('MAILJET_API_KEY'), os.getenv('MAILJET_SECRET_KEY')), version='v3.1')
+resend.api_key = os.getenv('RESEND_API_KEY')
 
 def send_booking_confirmation(to_email, user_name, facility_name, start_time, end_time, booking_id):
-    client = get_client()
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a18">
       <div style="background:#1a3a6b;padding:24px 32px">
@@ -28,15 +26,12 @@ def send_booking_confirmation(to_email, user_name, facility_name, start_time, en
         BookSpace - Campus Facility Booking System | DUT
       </div>
     </div>"""
-    
-    data = {'Messages': [{'From': {'Email': 'fakeemailforagroupproject26@gmail.com', 'Name': 'BookSpace'},
-        'To': [{'Email': to_email, 'Name': user_name}],
-        'Subject': 'BookSpace - Booking Received',
-        'HTMLPart': html}]}
-    client.send.create(data=data)
+    try:
+        resend.Emails.send({"from": "BookSpace <onboarding@resend.dev>", "to": [to_email], "subject": "BookSpace - Booking Received", "html": html})
+    except Exception as e:
+        print('Mail error:', e)
 
 def send_booking_status(to_email, user_name, facility_name, start_time, status, booking_id, end_time=''):
-    client = get_client()
     colour  = "#2d6a4f" if status == "approved" else "#9b2335"
     label   = "Approved" if status == "approved" else "Rejected"
     message = "Your booking has been approved. Please arrive on time." if status == "approved" \
@@ -49,7 +44,6 @@ def send_booking_status(to_email, user_name, facility_name, start_time, status, 
           <p style="font-size:12px;color:#8a8680;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">Present this QR code at the venue entrance</p>
           <img src="data:image/png;base64,{qr_base64}" width="160" height="160" alt="Booking QR Code"/>
         </div>"""
-
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a18">
       <div style="background:#1a3a6b;padding:24px 32px">
@@ -74,9 +68,7 @@ def send_booking_status(to_email, user_name, facility_name, start_time, status, 
         BookSpace - Campus Facility Booking System | DUT
       </div>
     </div>"""
-
-    data = {'Messages': [{'From': {'Email': 'fakeemailforagroupproject26@gmail.com', 'Name': 'BookSpace'},
-        'To': [{'Email': to_email, 'Name': user_name}],
-        'Subject': f'BookSpace - Booking {label}',
-        'HTMLPart': html}]}
-    client.send.create(data=data)
+    try:
+        resend.Emails.send({"from": "BookSpace <onboarding@resend.dev>", "to": [to_email], "subject": f"BookSpace - Booking {label}", "html": html})
+    except Exception as e:
+        print('Mail error:', e)
