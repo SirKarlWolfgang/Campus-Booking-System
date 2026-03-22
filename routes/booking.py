@@ -197,12 +197,12 @@ def create_booking():
             db.refresh(booking)
             user = db.query(User).filter_by(user_id=user_id).first()
             try:
-                send_booking_confirmation(
+                threading.Thread(target=send_booking_confirmation, args=(
                     user.email, user.username, facility.name,
-                    booking.start_time.strftime('%Y-%m-%d %H:%M'),
-                    booking.end_time.strftime('%H:%M'),
+                    booking.start_time.strftime("%Y-%m-%d %H:%M"),
+                    booking.end_time.strftime("%H:%M"),
                     booking.booking_id
-                )
+                ), daemon=True).start()
             except Exception as e:
                 print('Mail error:', e)
         except ValueError as e:
