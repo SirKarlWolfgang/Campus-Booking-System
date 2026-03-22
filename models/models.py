@@ -18,6 +18,7 @@ class BookingStatus(enum.Enum):
     approved = "approved"
     rejected = "rejected"
     checked_in = "checked_in"
+    cancelled  = "cancelled"
 
 # ----- User Model -----
 class User(Base):

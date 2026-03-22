@@ -224,10 +224,10 @@ def cancel_booking(booking_id):
         booking = db.query(Booking).filter_by(booking_id=booking_id, user_id=user_id).first()
         if not booking:
             return jsonify({'error': 'Booking not found'}), 404
-        if booking.status == BookingStatus.rejected:
+        if booking.status == BookingStatus.cancelled:
             return jsonify({'error': 'Booking already cancelled'}), 400
 
-        booking.status = BookingStatus.rejected
+        booking.status = BookingStatus.cancelled
         db.commit()
         return jsonify({'message': 'Booking cancelled'}), 200
 
