@@ -1195,8 +1195,9 @@ function confirmAIBooking(){
     if(data.error){ alert(data.error); return; }
     closeAIModal();
     document.getElementById('aiBookingInput').value = '';
-    showPage('mybookings', document.querySelectorAll('.nav-btn')[2]);
-    renderBookingList();
+    document.getElementById('modalRef').textContent = 'BK-' + data.booking.id;
+    document.getElementById('modalOverlay').classList.add('show');
+    updateStats(); renderBookingList(); renderFacilities();
   })
   .catch(function(){ alert('Booking failed. Try again.'); });
 }
