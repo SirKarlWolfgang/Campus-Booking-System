@@ -431,7 +431,7 @@ function renderBookingList(){
         </div>
         <div class="booking-actions">
           <span class="status-badge ${b.status}">${b.status}</span>
-          ${b.status==='pending'?`<button class="btn-cancel" onclick="cancelBooking(${b.booking_id})">Cancel</button>`:''}
+          ${b.status==='pending'?`<button class="btn-cancel" onclick="cancelBooking(${b.id})">Cancel</button>`:''}
         </div>
       </div>`).join('');
   })
