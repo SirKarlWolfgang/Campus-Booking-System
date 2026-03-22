@@ -94,10 +94,10 @@ def approve_booking(booking_id):
         user     = db.query(User).filter_by(user_id=booking.user_id).first()
         facility = db.query(Facility).filter_by(facility_id=booking.facility_id).first()
         try:
-            threading.Thread(target=send_booking_status, args=(
+            send_booking_status(
                 user.email, user.username, facility.name,
-                booking.start_time.strftime('%Y-%m-%d %H:%M'), 'approved', booking.booking_id,
-                booking.end_time.strftime('%H:%M')), daemon=True).start()
+                booking.start_time.strftime('%Y-%m-%d %H:%M'),
+                booking.end_time.strftime('%H:%M'), 'approved')
         except Exception as e:
             print('Mail error:', e)
         return jsonify({'message': 'Booking approved'}), 200
@@ -117,11 +117,12 @@ def reject_booking(booking_id):
         user     = db.query(User).filter_by(user_id=booking.user_id).first()
         facility = db.query(Facility).filter_by(facility_id=booking.facility_id).first()
         try:
-            threading.Thread(target=send_booking_status, args=(
+            send_booking_status(
                 user.email, user.username, facility.name,
-                booking.start_time.strftime('%Y-%m-%d %H:%M'), 'rejected', booking.booking_id), daemon=True).start()
-        except Exception:
-            pass
+                booking.start_time.strftime('%Y-%m-%d %H:%M'),
+                booking.end_time.strftime('%H:%M'), 'rejected')
+        except Exception as e:
+            print('Mail error:', e)
         return jsonify({'message': 'Booking rejected'}), 200
 
 
