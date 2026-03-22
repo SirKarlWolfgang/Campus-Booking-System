@@ -1,10 +1,13 @@
-from flask_mail import Message
-from app import mail
+import os
+from mailjet_rest import Client
 from utils.qr import generate_qr_base64
 
+def get_client():
+    return Client(auth=(os.getenv('MAILJET_API_KEY'), os.getenv('MAILJET_SECRET_KEY')), version='v3.1')
+
 def send_booking_confirmation(to_email, user_name, facility_name, start_time, end_time, booking_id):
-    msg = Message(subject="BookSpace - Booking Received", recipients=[to_email])
-    msg.html = f"""
+    client = get_client()
+    html = f"""
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a18">
       <div style="background:#1a3a6b;padding:24px 32px">
         <h2 style="color:#fff;margin:0">BookSpace</h2>
@@ -25,9 +28,15 @@ def send_booking_confirmation(to_email, user_name, facility_name, start_time, en
         BookSpace - Campus Facility Booking System | DUT
       </div>
     </div>"""
-    mail.send(msg)
+    
+    data = {'Messages': [{'From': {'Email': 'fakeemailforagroupproject26@gmail.com', 'Name': 'BookSpace'},
+        'To': [{'Email': to_email, 'Name': user_name}],
+        'Subject': 'BookSpace - Booking Received',
+        'HTMLPart': html}]}
+    client.send.create(data=data)
 
 def send_booking_status(to_email, user_name, facility_name, start_time, status, booking_id, end_time=''):
+    client = get_client()
     colour  = "#2d6a4f" if status == "approved" else "#9b2335"
     label   = "Approved" if status == "approved" else "Rejected"
     message = "Your booking has been approved. Please arrive on time." if status == "approved" \
@@ -40,8 +49,8 @@ def send_booking_status(to_email, user_name, facility_name, start_time, status, 
           <p style="font-size:12px;color:#8a8680;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">Present this QR code at the venue entrance</p>
           <img src="data:image/png;base64,{qr_base64}" width="160" height="160" alt="Booking QR Code"/>
         </div>"""
-    msg = Message(subject=f"BookSpace - Booking {label}", recipients=[to_email])
-    msg.html = f"""
+
+    html = f"""
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a18">
       <div style="background:#1a3a6b;padding:24px 32px">
         <h2 style="color:#fff;margin:0">BookSpace</h2>
@@ -56,6 +65,7 @@ def send_booking_status(to_email, user_name, facility_name, start_time, status, 
         <div style="background:#f5f2ec;border:1px solid #ddd9d0;padding:20px;margin:24px 0;font-size:13px">
           <p><span style="color:#8a8680">Facility:</span> <strong>{facility_name}</strong></p>
           <p><span style="color:#8a8680">Date:</span> <strong>{start_time.split(' ')[0]}</strong></p>
+          <p><span style="color:#8a8680">Time:</span> <strong>{start_time.split(' ')[1]} – {end_time}</strong></p>
           <p><span style="color:#8a8680">Booking ID:</span> <strong>#{booking_id}</strong></p>
         </div>
         {qr_section}
@@ -64,4 +74,9 @@ def send_booking_status(to_email, user_name, facility_name, start_time, status, 
         BookSpace - Campus Facility Booking System | DUT
       </div>
     </div>"""
-    mail.send(msg)
+
+    data = {'Messages': [{'From': {'Email': 'fakeemailforagroupproject26@gmail.com', 'Name': 'BookSpace'},
+        'To': [{'Email': to_email, 'Name': user_name}],
+        'Subject': f'BookSpace - Booking {label}',
+        'HTMLPart': html}]}
+    client.send.create(data=data)

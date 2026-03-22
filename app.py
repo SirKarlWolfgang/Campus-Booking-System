@@ -1,19 +1,10 @@
 import os
 from flask import Flask, render_template
-from flask_mail import Mail
 from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'campus-booking-secret-key-change-in-prod')
 
-app.config['MAIL_SERVER']         = 'smtp.gmail.com'
-app.config['MAIL_PORT']           = 465
-app.config['MAIL_USE_TLS']        = False
-app.config['MAIL_USE_SSL']        = True
-app.config['MAIL_USERNAME']       = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD']       = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = ('BookSpace', os.getenv('MAIL_USERNAME'))
-mail = Mail(app)
 
 # ── Register blueprints ───────────────────────────────────────────────────────
 from routes.auth    import auth_bp
