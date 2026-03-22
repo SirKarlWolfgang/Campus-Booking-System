@@ -1,1 +1,6 @@
-http://127.0.0.1:5000/static/images/filename.jpg
+https://your-railway-url.up.railway.app/static/images/labs_1.jpeg
+https://your-railway-url.up.railway.app/static/images/lab_2.png
+https://your-railway-url.up.railway.app/static/images/main_hall_1.jpeg
+https://your-railway-url.up.railway.app/static/images/main_hall_2.png
+https://your-railway-url.up.railway.app/static/images/study_room_1.jpeg
+https://your-railway-url.up.railway.app/static/images/study_room_2.jpeg
